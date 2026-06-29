@@ -24,9 +24,9 @@ edge. [Full flythrough (FastAPI)](docs/assets/demo.mp4)*
 ## Quickstart
 
 ```bash
-pip install droste-memory # Install the official engine from PyPI          
-droste index .            # index the current repo
-droste view               # open the fractal galaxy in your browser
+python -m pip install --upgrade droste-memory # install the official engine from PyPI
+droste index .                              # index the current repo
+droste view                                # open the fractal galaxy in your browser
 ```
 
 Three commands. `droste view` opens a full-screen, 60fps zoomable map of your
@@ -70,6 +70,7 @@ Commands
   droste status
   droste zoom <symbol_name>
   droste context [query] --budget 1500
+  droste mcp
 
 Fast path: droste context hub_core --budget 1000 | clip
 ```
@@ -148,6 +149,24 @@ search), not a head-to-head against the finished products that wrap them.
 
 Droste is a drop-in MCP server — an AI agent can call it as primary code memory instead of doing blind file reads. Add this to your client configuration file (e.g., Cursor, Claude Desktop, or Codex):
 
+First install or upgrade the PyPI package:
+
+```bash
+python -m pip install --upgrade droste-memory
+droste mcp --help
+```
+
+For Codex, add this to `C:\Users\<you>\.codex\config.toml` on Windows, or `~/.codex/config.toml` on macOS/Linux:
+
+```toml
+[mcp_servers.droste]
+command = "droste"
+args = ["mcp"]
+startup_timeout_sec = 120
+```
+
+For JSON-based MCP clients:
+
 ```json
 {
   "mcpServers": {
@@ -158,6 +177,8 @@ Droste is a drop-in MCP server — an AI agent can call it as primary code memor
   }
 }
 ```
+
+Restart your client after changing the MCP config. In a repo, ask your agent to call `droste_index_project` first, then `droste_get_context` for causal context.
 
 Key tools: `droste_index_project`, `droste_get_context`, `droste_status`.
 
