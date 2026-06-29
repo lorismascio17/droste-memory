@@ -66,17 +66,30 @@ def _risk_score(*parts: str | None) -> int:
     return min(5, sum(weight for term, weight in _RISK_TERMS.items() if term in text))
 
 
+def _resolve_root(p: str) -> str:
+    return _norm(str(Path(p).expanduser().resolve())).rstrip("/").lower()
+
+
 def _pick_root(engine: DrosteConceptEngine, requested: str | None) -> str:
-    roots = sorted({n.index_root for n in engine.all_nodes() if getattr(n, "index_root", None)})
-    if requested:
-        want = _norm(requested).rstrip("/")
-        for r in roots:
-            if _norm(r).rstrip("/") == want:
-                return r
-        raise SystemExit(f"root not indexed: {requested}\nindexed roots: {roots}")
+    nodes = [n for n in engine.all_nodes() if getattr(n, "index_root", None)]
+    roots = {n.index_root for n in nodes}
     if not roots:
         raise SystemExit("no indexed roots found — run `droste index <path>` first")
-    return roots[-1]
+    if requested:
+        want = _resolve_root(requested)        # resolves ".", relative paths, ~
+        for r in roots:
+            if _resolve_root(r) == want:
+                return r
+        raise SystemExit("root not indexed: " + str(requested)
+                         + "\nindexed roots:\n  " + "\n  ".join(sorted(roots)))
+    # No root requested: pick the MOST RECENTLY indexed (by node timestamp),
+    # not the alphabetically-last one.
+    latest: dict[str, str] = {}
+    for n in nodes:
+        ts = (getattr(n, "updated_at", "") or getattr(n, "created_at", "") or "")
+        if ts > latest.get(n.index_root, ""):
+            latest[n.index_root] = ts
+    return max(latest, key=latest.get) if latest else sorted(roots)[-1]
 
 
 def export(requested_root: str | None, out_path: Path) -> dict:

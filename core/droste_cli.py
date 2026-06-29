@@ -304,25 +304,55 @@ def command_view(args: argparse.Namespace) -> int:
     import threading
     import webbrowser
 
+    import os
+
     vis_dir = ROOT / "visualizer"
     spec = importlib.util.spec_from_file_location(
         "droste_export_graph", str(vis_dir / "export_graph.py"))
     exporter = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(exporter)
-    try:
-        counts = exporter.export(args.root, vis_dir / "graph.json")
-    except SystemExit as exc:
-        print(exc, file=sys.stderr)
-        return 2
 
     engine = _engine(args.db)
     nodes = engine.all_nodes()
     links = engine.all_links()
+
+    # Pick which indexed project to view. Default = the current working
+    # directory, so `droste index .` then `droste view` shows THIS project
+    # (not the alphabetically-last of every project ever indexed).
+    roots = sorted({n.index_root for n in nodes if n.index_root})
+    if not roots:
+        print("no indexed roots — run `droste index <path>` first", file=sys.stderr)
+        return 2
+
+    def _res(p):
+        return str(Path(p).expanduser().resolve()).replace("\\", "/").rstrip("/").lower()
+
+    if args.root:
+        want = _res(args.root)
+        chosen = next((r for r in roots if _res(r) == want), None)
+        if chosen is None:
+            print("root not indexed: " + args.root + "\nindexed roots:\n  "
+                  + "\n  ".join(roots), file=sys.stderr)
+            return 2
+    else:
+        cwd = _res(os.getcwd())
+        chosen = next((r for r in roots if _res(r) == cwd), None)
+        if chosen is None:
+            latest: dict[str, str] = {}
+            for n in nodes:
+                if n.index_root:
+                    ts = n.updated_at or n.created_at or ""
+                    if ts > latest.get(n.index_root, ""):
+                        latest[n.index_root] = ts
+            chosen = max(latest, key=latest.get) if latest else roots[-1]
+            print(f"  (current dir not indexed; showing most recent: {chosen})")
+
+    counts = exporter.export(chosen, vis_dir / "graph.json")
     (vis_dir / "status.json").write_text(json.dumps({
-        "node_count": len(nodes),
-        "symbol_count": sum(1 for n in nodes if n.node_type == "symbol"),
-        "link_count": len(links),
-        "syntax_link_count": sum(1 for l in links if l.type == "syntax_dependency"),
+        "node_count": counts["project"] + counts["directory"] + counts["file"] + counts["symbol"],
+        "symbol_count": counts["symbol"],
+        "link_count": counts["edge"],
+        "syntax_link_count": counts["edge"],
         "counts": counts,
     }, ensure_ascii=False), encoding="utf-8")
 
