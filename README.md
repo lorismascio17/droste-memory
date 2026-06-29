@@ -24,7 +24,7 @@ edge. [Full flythrough (FastAPI)](docs/assets/demo.mp4)*
 ## Quickstart
 
 ```bash
-pip install droste-memory .          
+pip install droste-memory # Install the official engine from PyPI          
 droste index .            # index the current repo
 droste view               # open the fractal galaxy in your browser
 ```
