@@ -178,7 +178,7 @@ cross-process shard race). `eval/` = performance/quality benchmarks.
 
 ## Status
 
-**v1.0.0a0 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
+**v1.0.1 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
 visualizer and MCP server are working and tested. Packaging/distribution are
 maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
 
