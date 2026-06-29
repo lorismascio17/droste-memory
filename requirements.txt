@@ -1,0 +1,18 @@
+mcp>=1.2.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+# Preferred real-semantics backend: ONNX, no torch -> protects the zero-config
+# moat while unlocking true synonym recall (hash fallback cannot). truststore
+# lets the one-time model fetch trust the OS/corporate cert store.
+fastembed>=0.8.0
+truststore>=0.10.0
+sentence-transformers>=2.7.0  # heavier fallback if fastembed is unavailable
+pydantic>=2.0.0
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+# Universal call-graph: real per-language ASTs so non-Python files emit
+# first-class syntax_dependency wormholes (was Python-only). Prebuilt wheels,
+# no compiler. Import is guarded in treesitter_extract.py -> a missing install
+# degrades gracefully to the regex registry, preserving the zero-config boot.
+tree-sitter>=0.23.0
+tree-sitter-language-pack>=1.9.0

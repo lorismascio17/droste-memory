@@ -1,0 +1,37 @@
+{
+  "name": "droste-memory",
+  "version": "0.4.1+auto-boot",
+  "description": "Spatial-fractal memory tools for the local Droste-Memory engine.",
+  "author": {
+    "name": "Droste-Memory local workspace"
+  },
+  "keywords": [
+    "memory",
+    "mcp",
+    "spatial",
+    "fractal",
+    "visualizer"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Droste Memory",
+    "shortDescription": "Save and explore memories on a zoomable 2D canvas.",
+    "longDescription": "Droste Memory connects Codex to the local Droste-Memory core engine and FastAPI visualizer. It can save durable nodes, pan or zoom the virtual camera, reveal deeper details at higher zoom levels, and keep the dashboard state synchronized when it is running.",
+    "developerName": "Droste-Memory local workspace",
+    "category": "Productivity",
+    "capabilities": [
+      "MCP",
+      "Memory",
+      "Interactive",
+      "Code Indexing",
+      "Context Retrieval"
+    ],
+    "defaultPrompt": [
+      "Remember this in Droste Memory.",
+      "Index this project into Droste Memory.",
+      "Zoom into the relevant memory node."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

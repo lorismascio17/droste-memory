@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "droste-memory": {
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        ".\\scripts\\run_mcp.ps1"
+      ],
+      "env": {
+        "DROSTE_VISUALIZER_URL": "http://127.0.0.1:5000"
+      }
+    }
+  }
+}

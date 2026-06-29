@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Droste Universe Code Viewer</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --space: #05070f;
+    --panel: rgba(7, 11, 23, .9);
+    --line: rgba(148, 163, 184, .18);
+    --ink: #f8fafc;
+    --soft: #cbd5e1;
+    --muted: #7c8aa0;
+    --cyan: #22d3ee;
+    --violet: #a78bfa;
+    --amber: #f59e0b;
+    --rose: #fb7185;
+    --green: #34d399;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--space); }
+  body {
+    color: var(--soft);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  button, input { font: inherit; }
+  button { color: inherit; }
+  .mono { font-family: "Cascadia Code", "JetBrains Mono", Consolas, monospace; }
+  .caps { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  #stage {
+    position: fixed;
+    inset: 0;
+    cursor: grab;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 48%, rgba(17, 43, 80, .3), transparent 36%),
+      #05070f;
+  }
+  #stage.grabbing { cursor: grabbing; }
+  #stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(34,211,238,.24), transparent 28px) top 80px left 14px / 64px 1px no-repeat,
+      linear-gradient(rgba(34,211,238,.24), transparent 28px) top 80px left 14px / 1px 64px no-repeat,
+      linear-gradient(270deg, rgba(34,211,238,.18), transparent 28px) bottom 14px right 14px / 64px 1px no-repeat,
+      linear-gradient(0deg, rgba(34,211,238,.18), transparent 28px) bottom 14px right 14px / 1px 64px no-repeat,
+      radial-gradient(ellipse at center, transparent 48%, rgba(2,6,23,.22) 78%, rgba(2,6,23,.54) 100%);
+  }
+  #stars, #grid {
+    position: absolute;
+    inset: -220px;
+    pointer-events: none;
+    will-change: transform;
+  }
+  #stars {
+    opacity: .68;
+    background-image:
+      radial-gradient(circle, rgba(255,255,255,.72) 0 1px, transparent 1.5px),
+      radial-gradient(circle, rgba(103,232,249,.5) 0 1px, transparent 1.5px),
+      radial-gradient(circle, rgba(196,181,253,.42) 0 1px, transparent 1.5px);
+    background-position: 0 0, 43px 71px, 117px 29px;
+    background-size: 151px 151px, 223px 223px, 311px 311px;
+  }
+  #grid {
+    opacity: .36;
+    background-image:
+      linear-gradient(rgba(103,232,249,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(103,232,249,.07) 1px, transparent 1px),
+      linear-gradient(rgba(103,232,249,.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(103,232,249,.022) 1px, transparent 1px);
+    background-size: 72px 72px, 72px 72px, 18px 18px, 18px 18px;
+    mask-image: radial-gradient(circle at center, black 12%, rgba(0,0,0,.8) 55%, transparent 92%);
+  }
+  #universe, #effects {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+  }
+  #effects { pointer-events: none; }
+
+  .hud {
+    position: absolute;
+    z-index: 20;
+    border: 1px solid var(--line);
+    background:
+      linear-gradient(135deg, rgba(34,211,238,.035), transparent 34%),
+      var(--panel);
+    box-shadow: 0 22px 70px rgba(0,0,0,.32);
+  }
+  #topbar {
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 12px;
+    border-radius: 7px;
+  }
+  #topbar::after {
+    content: "";
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: -1px;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(34,211,238,.42), transparent);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 226px; }
+  .brand-mark {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(103,232,249,.52);
+    border-radius: 50%;
+  }
+  .brand-mark::before, .brand-mark::after {
+    content: "";
+    position: absolute;
+    border: 1px solid var(--cyan);
+    border-radius: 50%;
+  }
+  .brand-mark::before { inset: 4px; }
+  .brand-mark::after { inset: 8px; background: white; box-shadow: 0 0 8px var(--cyan); }
+  .brand strong { color: var(--ink); font-size: 13px; }
+  .brand span { display: block; color: var(--muted); margin-top: 1px; }
+  .metric {
+    min-width: 72px;
+    padding-left: 14px;
+    border-left: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .metric b { color: var(--ink); font-size: 12px; font-weight: 600; }
+  .metric span { display: block; color: var(--muted); margin-top: 2px; }
+  #fps.good { color: var(--green); }
+  #fps.warn { color: var(--amber); }
+  #fps.bad { color: var(--rose); }
+  .search {
+    margin-left: auto;
+    width: min(280px, 24vw);
+    height: 30px;
+    padding: 0 10px;
+    color: var(--ink);
+    background: rgba(15,23,42,.72);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    outline: none;
+  }
+  .search:focus { border-color: rgba(34,211,238,.58); box-shadow: 0 0 0 2px rgba(34,211,238,.08); }
+
+  #level-guide {
+    left: 14px;
+    bottom: 14px;
+    width: 232px;
+    padding: 11px 12px;
+    border-radius: 7px;
+  }
+  .level-row {
+    display: grid;
+    grid-template-columns: 20px 1fr auto;
+    align-items: center;
+    gap: 7px;
+    min-height: 25px;
+    color: var(--muted);
+    font-size: 11px;
+    transition: color .2s, opacity .2s;
+  }
+  .level-row.active {
+    color: var(--ink);
+    background: linear-gradient(90deg, rgba(34,211,238,.08), transparent);
+    box-shadow: inset 2px 0 0 rgba(34,211,238,.55);
+  }
+  .level-row.future { opacity: .38; }
+  .level-dot {
+    width: 8px;
+    height: 8px;
+    margin-left: 3px;
+    border-radius: 50%;
+    background: #2563eb;
+    box-shadow: 0 0 6px rgba(37,99,235,.7);
+  }
+  .level-row[data-level="0"] .level-dot { background: white; box-shadow: 0 0 8px var(--cyan); }
+  .level-row[data-level="2"] .level-dot { width: 6px; height: 6px; background: #94a3b8; }
+  .level-row[data-level="3"] .level-dot { width: 5px; height: 5px; background: var(--cyan); }
+  .level-row em { color: var(--cyan); font-style: normal; font-size: 9px; }
+
+  #controls {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    z-index: 22;
+    display: flex;
+    gap: 6px;
+  }
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(7,11,23,.9);
+    color: var(--soft);
+    cursor: pointer;
+  }
+  .icon-btn:hover { color: white; border-color: rgba(34,211,238,.5); }
+  .icon-btn.wide { width: auto; padding: 0 10px; }
+
+  #panel {
+    top: 76px;
+    right: 14px;
+    bottom: 58px;
+    width: min(430px, calc(100vw - 28px));
+    display: flex;
+    flex-direction: column;
+    border-radius: 7px;
+    transform: translateX(calc(100% + 28px));
+    opacity: 0;
+    transition: transform .38s cubic-bezier(.2,.8,.2,1), opacity .2s ease;
+    overflow: hidden;
+  }
+  #panel.open { transform: translateX(0); opacity: 1; }
+  #panel.open::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 1px;
+    background: linear-gradient(transparent, rgba(34,211,238,.58), transparent);
+    pointer-events: none;
+  }
+  .panel-head {
+    height: 48px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .lang {
+    padding: 4px 5px;
+    border: 1px solid rgba(34,211,238,.28);
+    border-radius: 3px;
+    color: #67e8f9;
+    background: rgba(34,211,238,.07);
+    font: 600 9px/1 "Cascadia Code", Consolas, monospace;
+    text-transform: uppercase;
+  }
+  #panel-title { color: var(--ink); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #panel-close { margin-left: auto; }
+  .panel-scroll { min-height: 0; overflow-y: auto; }
+  .section { padding: 12px; border-bottom: 1px solid var(--line); }
+  .section-title { display: flex; justify-content: space-between; color: var(--muted); margin-bottom: 9px; }
+  .path { color: #67e8f9; font-size: 11px; overflow-wrap: anywhere; }
+  .summary { color: var(--soft); font-size: 12px; line-height: 1.55; margin-top: 8px; }
+  pre {
+    margin: 0;
+    padding: 12px;
+    overflow: auto;
+    color: #dbeafe;
+    background: rgba(2,6,23,.72);
+    font: 11px/1.55 "Cascadia Code", Consolas, monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .edge-list { display: grid; gap: 6px; }
+  .edge-chip {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 8px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--soft);
+    background: rgba(15,23,42,.5);
+    text-align: left;
+    cursor: pointer;
+  }
+  .edge-chip:hover { border-color: rgba(34,211,238,.42); }
+  .edge-chip b { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .edge-chip span { color: var(--muted); font-size: 9px; }
+  .edge-chip em { color: var(--cyan); font-style: normal; font-size: 9px; text-transform: uppercase; }
+  .panel-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    flex: 0 0 auto;
+    border-top: 1px solid var(--line);
+  }
+  .panel-stats div { padding: 9px; text-align: center; border-right: 1px solid var(--line); }
+  .panel-stats div:last-child { border-right: 0; }
+  .panel-stats b { display: block; color: var(--ink); font-size: 14px; }
+  .panel-stats span { color: var(--muted); }
+
+  #tooltip {
+    position: fixed;
+    z-index: 50;
+    max-width: 330px;
+    padding: 7px 9px;
+    border: 1px solid rgba(34,211,238,.34);
+    border-radius: 4px;
+    color: var(--ink);
+    background: rgba(2,6,23,.95);
+    box-shadow: 0 10px 35px rgba(0,0,0,.5);
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(12px, 12px);
+    transition: opacity .1s ease;
+  }
+  #tooltip.show { opacity: 1; }
+  #tooltip small { display: block; margin-top: 3px; color: var(--muted); }
+
+  #loading {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    background: var(--space);
+    transition: opacity .3s ease, visibility .3s ease;
+  }
+  #loading.done { opacity: 0; visibility: hidden; }
+  .loader { text-align: center; }
+  .loader-orbit {
+    width: 74px;
+    height: 74px;
+    margin: 0 auto 15px;
+    border: 1px dashed rgba(34,211,238,.5);
+    border-radius: 50%;
+    position: relative;
+    animation: spin 2.5s linear infinite;
+  }
+  .loader-orbit::before {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    left: 30px;
+    top: 30px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 18px var(--cyan);
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #error { color: var(--rose); max-width: 520px; padding: 0 20px; line-height: 1.5; }
+
+  @media (max-width: 900px) {
+    #topbar { gap: 9px; flex-wrap: wrap; }
+    .brand { min-width: 180px; }
+    .metric.optional { display: none; }
+    .search { order: 3; width: 100%; margin-left: 0; }
+    #panel { top: 112px; }
+  }
+  @media (max-width: 520px) {
+    #topbar { padding: 8px 10px; }
+    .brand { min-width: 0; flex: 1 1 auto; }
+    .metric { display: none; }
+    #controls .wide { display: none; }
+    #level-guide { width: 190px; }
+    #panel { right: 8px; width: calc(100vw - 16px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .loader-orbit { animation: none; }
+  }
+</style>
+</head>
+<body>
+<main id="stage" aria-label="Hierarchical code universe">
+  <div id="stars"></div>
+  <div id="grid"></div>
+  <canvas id="universe"></canvas>
+  <canvas id="effects"></canvas>
+</main>
+
+<header id="topbar" class="hud">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <div><strong>Universe Code Viewer</strong><span id="project-name" class="caps">Loading graph</span></div>
+  </div>
+  <div class="metric"><b id="lod-name">L0 Project</b><span class="caps">semantic zoom</span></div>
+  <div class="metric optional"><b id="visible-count" class="tabular">1</b><span class="caps">visible bodies</span></div>
+  <div class="metric"><b id="fps" class="good tabular">60 FPS</b><span class="caps">render health</span></div>
+  <input id="search" class="search mono" type="search" placeholder="Find symbol or file..." autocomplete="off" aria-label="Find a symbol or file">
+</header>
+
+<aside id="level-guide" class="hud">
+  <div class="caps" style="color:var(--soft);margin-bottom:5px">Orbital depth</div>
+  <div class="level-row active" data-level="0"><span class="level-dot"></span><span>Project star</span><em>L0</em></div>
+  <div class="level-row future" data-level="1"><span class="level-dot"></span><span>Directory planets</span><em>L1</em></div>
+  <div class="level-row future" data-level="2"><span class="level-dot"></span><span>File worlds</span><em>L2</em></div>
+  <div class="level-row future" data-level="3"><span class="level-dot"></span><span>Symbol moons</span><em>L3</em></div>
+</aside>
+
+<nav id="controls" aria-label="Universe controls">
+  <button class="icon-btn" id="zoom-out" title="Zoom out" aria-label="Zoom out">&minus;</button>
+  <button class="icon-btn" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+  <button class="icon-btn wide caps" id="reset" title="Reset view">Reset</button>
+</nav>
+
+<aside id="panel" class="hud" aria-live="polite">
+  <div class="panel-head">
+    <span id="panel-lang" class="lang">--</span>
+    <span id="panel-title" class="mono">Selection</span>
+    <button id="panel-close" class="icon-btn" title="Close details" aria-label="Close details">&times;</button>
+  </div>
+  <div class="panel-scroll">
+    <section class="section">
+      <div class="section-title caps"><span>Orbital coordinates</span><span id="panel-lines"></span></div>
+      <div id="panel-path" class="path mono"></div>
+      <div id="panel-summary" class="summary"></div>
+    </section>
+    <section>
+      <div class="section" style="padding-bottom:9px">
+        <div class="section-title caps" style="margin:0"><span>Source telemetry</span><span id="panel-risk"></span></div>
+      </div>
+      <pre id="panel-code"></pre>
+    </section>
+    <section class="section">
+      <div class="section-title caps"><span>Causal radar</span><span style="color:var(--cyan)">Wormholes</span></div>
+      <div id="edge-list" class="edge-list"></div>
+    </section>
+  </div>
+  <div class="panel-stats">
+    <div><b id="out-count">0</b><span class="caps">outgoing</span></div>
+    <div><b id="in-count">0</b><span class="caps">incoming</span></div>
+    <div><b id="degree-count">0</b><span class="caps">degree</span></div>
+  </div>
+</aside>
+
+<div id="tooltip" class="mono"></div>
+<div id="loading">
+  <div class="loader">
+    <div class="loader-orbit"></div>
+    <div class="caps" style="color:var(--cyan)">Mapping code hierarchy</div>
+    <div id="error" class="mono"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const LEVELS = [
+    { name: "L0 Project", enter: 0 },
+    { name: "L1 Directories", enter: .56 },
+    { name: "L2 Files", enter: 1.38 },
+    { name: "L3 Symbols", enter: 2.75 },
+  ];
+  const COLORS = [
+    ["#93c5fd", "#2563eb", "#0b1d4d"],
+    ["#ddd6fe", "#8b5cf6", "#2e1065"],
+    ["#99f6e4", "#0d9488", "#042f2e"],
+    ["#fbcfe8", "#db2777", "#500724"],
+  ];
+
+  const stage = document.getElementById("stage");
+  const canvas = document.getElementById("universe");
+  const effectsCanvas = document.getElementById("effects");
+  const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
+  const fx = effectsCanvas.getContext("2d", { alpha: true, desynchronized: true });
+  const grid = document.getElementById("grid");
+  const stars = document.getElementById("stars");
+  const tooltip = document.getElementById("tooltip");
+  const panel = document.getElementById("panel");
+  const loading = document.getElementById("loading");
+  const search = document.getElementById("search");
+
+  const state = {
+    graph: null,
+    status: null,
+    nodes: new Map(),
+    children: new Map(),
+    incoming: new Map(),
+    outgoing: new Map(),
+    root: null,
+    topDirectories: [],
+    allDirectories: [],
+    files: [],
+    symbols: [],
+    scale: .36,
+    targetScale: .36,
+    x: 0,
+    y: 0,
+    targetX: 0,
+    targetY: 0,
+    velocityX: 0,
+    velocityY: 0,
+    width: 0,
+    height: 0,
+    dpr: 1,
+    dragging: false,
+    pointerX: 0,
+    pointerY: 0,
+    moved: false,
+    hovered: null,
+    selected: null,
+    hitTargets: [],
+    visibleSymbols: new Set(),
+    visibleFiles: new Set(),
+    activeEdges: [],
+    spriteCache: new Map(),
+    baseDirty: true,
+    frameRequested: false,
+    loopActive: false,
+    pulseActive: false,
+    lastTime: performance.now(),
+    fpsFrames: 0,
+    fpsWindow: performance.now(),
+    fps: 60,
+    level: 0,
+  };
+
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const smooth = (value, start, end) => {
+    const t = clamp((value - start) / (end - start), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+  const hash = value => {
+    let result = 2166136261;
+    for (let i = 0; i < value.length; i++) {
+      result ^= value.charCodeAt(i);
+      result = Math.imul(result, 16777619);
+    }
+    return result >>> 0;
+  };
+  const risk = node => Number(node?.risk_score || 0);
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+  })[character]);
+
+  function addChild(parentId, childId) {
+    if (!state.children.has(parentId)) state.children.set(parentId, []);
+    state.children.get(parentId).push(childId);
+  }
+
+  function buildIndexes() {
+    for (const node of state.graph.nodes) {
+      state.nodes.set(node.id, node);
+      state.children.set(node.id, []);
+      state.incoming.set(node.id, []);
+      state.outgoing.set(node.id, []);
+    }
+    for (const node of state.graph.nodes) {
+      if (node.parent && state.nodes.has(node.parent)) addChild(node.parent, node.id);
+    }
+    for (const edge of state.graph.edges) {
+      if (state.outgoing.has(edge.from)) state.outgoing.get(edge.from).push(edge);
+      if (state.incoming.has(edge.to)) state.incoming.get(edge.to).push(edge);
+    }
+    state.root = state.graph.nodes.find(node => node.type === "project");
+    state.allDirectories = state.graph.nodes.filter(node => node.type === "directory");
+    state.files = state.graph.nodes.filter(node => node.type === "file");
+    state.symbols = state.graph.nodes.filter(node => node.type === "symbol");
+    state.topDirectories = state.allDirectories.filter(node => state.nodes.get(node.parent)?.type === "project");
+  }
+
+  function childrenOf(node, type) {
+    return (state.children.get(node.id) || [])
+      .map(id => state.nodes.get(id))
+      .filter(child => child && (!type || child.type === type));
+  }
+
+  function descendantsOf(node, type) {
+    const result = [];
+    const queue = [...(state.children.get(node.id) || [])];
+    while (queue.length) {
+      const id = queue.shift();
+      const child = state.nodes.get(id);
+      if (!child) continue;
+      if (!type || child.type === type) result.push(child);
+      queue.push(...(state.children.get(id) || []));
+    }
+    return result;
+  }
+
+  function directoryWeight(directory) {
+    return descendantsOf(directory, "symbol").length + descendantsOf(directory, "file").length * 3;
+  }
+
+  function layoutRing(nodes, parent, baseRadius, spacing, phase = 0) {
+    if (!nodes.length) return;
+    let cursor = 0;
+    let ring = 0;
+    while (cursor < nodes.length) {
+      const radius = baseRadius + ring * spacing;
+      const capacity = Math.max(6, Math.floor(Math.PI * 2 * radius / Math.max(48, spacing * .8)));
+      const count = Math.min(capacity, nodes.length - cursor);
+      for (let index = 0; index < count; index++) {
+        const node = nodes[cursor + index];
+        const angle = phase + index * Math.PI * 2 / count + ring * .23;
+        node.x = parent.x + Math.cos(angle) * radius;
+        node.y = parent.y + Math.sin(angle) * radius;
+        node.orbitParent = parent.id;
+        node.orbitRadius = radius;
+      }
+      cursor += count;
+      ring++;
+    }
+  }
+
+  function assignLayout() {
+    const root = state.root;
+    root.x = 0;
+    root.y = 0;
+    root.radius = 54;
+
+    state.topDirectories.sort((a, b) => directoryWeight(b) - directoryWeight(a) || a.label.localeCompare(b.label));
+    layoutRing(state.topDirectories, root, 440, 180, -Math.PI / 2);
+    state.topDirectories.forEach((directory, index) => {
+      directory.depth = 1;
+      directory.radius = clamp(22 + Math.sqrt(Math.max(1, directoryWeight(directory))) * .95, 25, 46);
+      directory.palette = index % COLORS.length;
+    });
+
+    const nested = state.allDirectories
+      .filter(directory => !state.topDirectories.includes(directory))
+      .sort((a, b) => a.label.localeCompare(b.label));
+    const nestedByParent = new Map();
+    for (const directory of nested) {
+      if (!nestedByParent.has(directory.parent)) nestedByParent.set(directory.parent, []);
+      nestedByParent.get(directory.parent).push(directory);
+    }
+
+    const placeNested = parent => {
+      const directories = nestedByParent.get(parent.id) || [];
+      layoutRing(directories, parent, Math.max(82, parent.radius + 62), 70, (hash(parent.id) % 628) / 100);
+      directories.forEach((directory, index) => {
+        directory.depth = (parent.depth || 0) + 1;
+        directory.radius = clamp(15 + Math.sqrt(Math.max(1, directoryWeight(directory))) * .72, 18, 32);
+        directory.palette = (parent.palette + index + 1) % COLORS.length;
+        placeNested(directory);
+      });
+    };
+    state.topDirectories.forEach(placeNested);
+
+    const rootFiles = childrenOf(root, "file").sort((a, b) => a.label.localeCompare(b.label));
+    layoutRing(rootFiles, root, 205, 54, .14);
+    rootFiles.forEach(file => {
+      file.ownerDirectory = null;
+      file.depth = 1;
+    });
+
+    for (const directory of state.allDirectories) {
+      const files = childrenOf(directory, "file").sort((a, b) => a.label.localeCompare(b.label));
+      const base = Math.max(directory.radius + 52, 72);
+      layoutRing(files, directory, base, 43, (hash(directory.id) % 628) / 100);
+      files.forEach(file => {
+        file.ownerDirectory = directory.id;
+        file.depth = directory.depth + 1;
+      });
+    }
+
+    for (const file of state.files) {
+      file.radius = clamp(4.2 + Math.sqrt(childrenOf(file, "symbol").length) * .19, 4.5, 8);
+      const symbols = childrenOf(file, "symbol")
+        .sort((a, b) => (a.line_start || 0) - (b.line_start || 0) || a.label.localeCompare(b.label));
+      symbols.forEach((symbol, index) => {
+        const golden = 2.399963229728653;
+        const radius = 18 + Math.sqrt(index) * 5.2;
+        const angle = index * golden + (hash(file.id) % 628) / 100;
+        symbol.x = file.x + Math.cos(angle) * radius;
+        symbol.y = file.y + Math.sin(angle) * radius;
+        symbol.fileId = file.id;
+        symbol.ownerDirectory = file.ownerDirectory;
+        symbol.radius = risk(symbol) ? 2.8 : 2.15;
+      });
+    }
+  }
+
+  function sprite(key, size, painter) {
+    if (state.spriteCache.has(key)) return state.spriteCache.get(key);
+    const image = document.createElement("canvas");
+    image.width = size;
+    image.height = size;
+    const imageContext = image.getContext("2d");
+    painter(imageContext, size);
+    state.spriteCache.set(key, image);
+    return image;
+  }
+
+  function starSprite() {
+    return sprite("star", 192, (target, size) => {
+      const center = size / 2;
+      const halo = target.createRadialGradient(center, center, 8, center, center, center);
+      halo.addColorStop(0, "rgba(255,255,255,.95)");
+      halo.addColorStop(.16, "rgba(254,243,199,.95)");
+      halo.addColorStop(.35, "rgba(34,211,238,.75)");
+      halo.addColorStop(.58, "rgba(34,211,238,.2)");
+      halo.addColorStop(1, "rgba(34,211,238,0)");
+      target.fillStyle = halo;
+      target.fillRect(0, 0, size, size);
+    });
+  }
+
+  function planetSprite(node) {
+    const paletteIndex = node.palette || 0;
+    const risky = risk(node) > 0;
+    return sprite(`planet:${paletteIndex}:${risky}`, 128, (target, size) => {
+      const center = size / 2;
+      const radius = 38;
+      const palette = risky ? ["#fde68a", "#f59e0b", "#881337"] : COLORS[paletteIndex];
+      const halo = target.createRadialGradient(center, center, radius * .6, center, center, radius * 1.6);
+      halo.addColorStop(0, risky ? "rgba(245,158,11,.32)" : "rgba(37,99,235,.24)");
+      halo.addColorStop(1, "rgba(0,0,0,0)");
+      target.fillStyle = halo;
+      target.fillRect(0, 0, size, size);
+      const body = target.createRadialGradient(
+        center - radius * .34, center - radius * .34, radius * .08,
+        center, center, radius
+      );
+      body.addColorStop(0, palette[0]);
+      body.addColorStop(.42, palette[1]);
+      body.addColorStop(1, palette[2]);
+      target.fillStyle = body;
+      target.beginPath();
+      target.arc(center, center, radius, 0, Math.PI * 2);
+      target.fill();
+      target.strokeStyle = "rgba(255,255,255,.52)";
+      target.lineWidth = 1;
+      target.stroke();
+    });
+  }
+
+  function fileSprite(risky) {
+    return sprite(`file:${risky}`, 40, (target, size) => {
+      const center = size / 2;
+      const halo = target.createRadialGradient(center, center, 2, center, center, 18);
+      halo.addColorStop(0, risky ? "rgba(245,158,11,.8)" : "rgba(226,232,240,.8)");
+      halo.addColorStop(.45, risky ? "rgba(245,158,11,.28)" : "rgba(148,163,184,.28)");
+      halo.addColorStop(1, "rgba(0,0,0,0)");
+      target.fillStyle = halo;
+      target.fillRect(0, 0, size, size);
+      target.fillStyle = risky ? "#f59e0b" : "#94a3b8";
+      target.beginPath();
+      target.arc(center, center, 6, 0, Math.PI * 2);
+      target.fill();
+      target.strokeStyle = "#e2e8f0";
+      target.lineWidth = 1;
+      target.stroke();
+    });
+  }
+
+  function symbolSprite(risky) {
+    return sprite(`symbol:${risky}`, 24, (target, size) => {
+      const center = size / 2;
+      const halo = target.createRadialGradient(center, center, 1, center, center, 11);
+      halo.addColorStop(0, risky ? "#fff7d6" : "#cffafe");
+      halo.addColorStop(.2, risky ? "#f59e0b" : "#22d3ee");
+      halo.addColorStop(.55, risky ? "rgba(245,158,11,.25)" : "rgba(34,211,238,.22)");
+      halo.addColorStop(1, "rgba(0,0,0,0)");
+      target.fillStyle = halo;
+      target.fillRect(0, 0, size, size);
+    });
+  }
+
+  function drawOutlinedText(text, x, y, align = "center") {
+    ctx.textAlign = align;
+    ctx.strokeStyle = "rgba(5,7,15,.94)";
+    ctx.lineWidth = 3;
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
+  }
+
+  function resize() {
+    const rect = stage.getBoundingClientRect();
+    state.width = Math.max(1, rect.width);
+    state.height = Math.max(1, rect.height);
+    state.dpr = Math.min(devicePixelRatio || 1, innerWidth < 600 ? 1.25 : 1.5);
+    canvas.width = Math.round(state.width * state.dpr);
+    canvas.height = Math.round(state.height * state.dpr);
+    effectsCanvas.width = canvas.width;
+    effectsCanvas.height = canvas.height;
+    canvas.style.width = `${state.width}px`;
+    canvas.style.height = `${state.height}px`;
+    effectsCanvas.style.width = `${state.width}px`;
+    effectsCanvas.style.height = `${state.height}px`;
+    requestDraw();
+  }
+
+  function worldToScreen(node) {
+    return {
+      x: state.x + node.x * state.scale,
+      y: state.y + node.y * state.scale,
+    };
+  }
+
+  function symbolScreenRadius(node) {
+    return clamp(node.radius * state.scale, 2.1, 5) + 1.5;
+  }
+
+  function pointToward(origin, target, distance) {
+    const dx = target.x - origin.x;
+    const dy = target.y - origin.y;
+    const length = Math.hypot(dx, dy) || 1;
+    return {
+      x: origin.x + dx / length * distance,
+      y: origin.y + dy / length * distance,
+    };
+  }
+
+  function wormholeGeometry(from, to) {
+    const fromCenter = worldToScreen(from);
+    const toCenter = worldToScreen(to);
+    const dx = toCenter.x - fromCenter.x;
+    const dy = toCenter.y - fromCenter.y;
+    const length = Math.hypot(dx, dy) || 1;
+    const bend = Math.min(110, Math.max(18, length * .16));
+    const sign = hash(from.id + to.id) % 2 ? 1 : -1;
+    const control = {
+      x: (fromCenter.x + toCenter.x) / 2 - dy / length * bend * sign,
+      y: (fromCenter.y + toCenter.y) / 2 + dx / length * bend * sign,
+    };
+    return {
+      fromCenter,
+      toCenter,
+      start: pointToward(fromCenter, control, symbolScreenRadius(from)),
+      end: pointToward(toCenter, control, symbolScreenRadius(to)),
+      control,
+    };
+  }
+
+  function inViewport(point, margin = 80) {
+    return point.x > -margin && point.y > -margin &&
+      point.x < state.width + margin && point.y < state.height + margin;
+  }
+
+  function endpointIsVisible(point) {
+    if (!inViewport(point, 18)) return false;
+    if (panel.classList.contains("open")) {
+      const rect = panel.getBoundingClientRect();
+      if (point.x >= rect.left - 8 && point.x <= rect.right + 8 &&
+          point.y >= rect.top - 8 && point.y <= rect.bottom + 8) return false;
+    }
+    return point.y > 72;
+  }
+
+  function currentLevel() {
+    if (state.scale >= LEVELS[3].enter) return 3;
+    if (state.scale >= LEVELS[2].enter) return 2;
+    if (state.scale >= LEVELS[1].enter) return 1;
+    return 0;
+  }
+
+  function alphaForLevel(level) {
+    if (level === 0) return 1;
+    if (level === 1) return smooth(state.scale, .5, .72);
+    if (level === 2) return smooth(state.scale, 1.22, 1.62);
+    return smooth(state.scale, 2.52, 3.05);
+  }
+
+  function drawOrbit(parent, child, alpha, dashed = true) {
+    if (alpha <= .01) return;
+    const center = worldToScreen(parent);
+    const radius = child.orbitRadius * state.scale;
+    if (radius < 5 || !inViewport(center, radius + 30)) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = "rgba(103,232,249,.25)";
+    ctx.lineWidth = 1;
+    if (dashed) ctx.setLineDash([2, clamp(8 * state.scale, 5, 11)]);
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawRoot(alpha = 1) {
+    const root = state.root;
+    const point = worldToScreen(root);
+    const radius = clamp(root.radius * Math.max(.7, state.scale), 26, 78);
+    const imageSize = radius * 3.6;
+    const image = starSprite();
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(image, point.x - imageSize / 2, point.y - imageSize / 2, imageSize, imageSize);
+    ctx.restore();
+    state.hitTargets.push({ node: root, x: point.x, y: point.y, radius: Math.max(24, radius) });
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `700 ${clamp(17 + state.scale * 3, 18, 25)}px Inter, system-ui`;
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.fillText(root.label || state.graph.root_name, point.x, point.y + radius + 23);
+    ctx.font = "10px Cascadia Code, Consolas, monospace";
+    ctx.fillStyle = `rgba(103,232,249,${alpha * .9})`;
+    ctx.fillText("L0 CENTRAL STAR", point.x, point.y + radius + 40);
+  }
+
+  function drawPlanet(node, alpha, nested = false) {
+    const point = worldToScreen(node);
+    if (!inViewport(point, 90)) return false;
+    const radius = clamp(node.radius * state.scale, nested ? 8 : 11, nested ? 27 : 42);
+    const selected = state.selected?.id === node.id;
+    const hovered = state.hovered?.id === node.id;
+    const dim = focusAlpha(node);
+    ctx.save();
+    ctx.globalAlpha = alpha * dim;
+    const imageSize = radius * 3.3;
+    ctx.drawImage(planetSprite(node), point.x - imageSize / 2, point.y - imageSize / 2, imageSize, imageSize);
+    if (selected || hovered) {
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = selected ? 2 : 1.3;
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    if (alpha > .25 && radius > 7) {
+      ctx.font = `${nested ? 10 : 11}px Cascadia Code, Consolas, monospace`;
+      ctx.textBaseline = "bottom";
+      ctx.fillStyle = "rgba(226,232,240,.92)";
+      drawOutlinedText(shortLabel(node.label, nested ? 22 : 28), point.x, point.y - radius - 7);
+    }
+    ctx.restore();
+    state.hitTargets.push({ node, x: point.x, y: point.y, radius: Math.max(12, radius + 3) });
+    return true;
+  }
+
+  function drawFile(node, alpha) {
+    const point = worldToScreen(node);
+    if (!inViewport(point, 50)) return false;
+    const radius = clamp(node.radius * state.scale, 4, 12);
+    const selected = state.selected?.id === node.id;
+    const hovered = state.hovered?.id === node.id;
+    const dim = focusAlpha(node);
+
+    ctx.save();
+    ctx.globalAlpha = alpha * dim;
+    const imageSize = radius * 4.2;
+    ctx.drawImage(fileSprite(risk(node) > 0), point.x - imageSize / 2, point.y - imageSize / 2, imageSize, imageSize);
+    if (selected || hovered) {
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = selected ? 1.5 : 1;
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    if (state.scale >= 1.72 && (selected || hovered || radius >= 7)) {
+      ctx.font = "10px Cascadia Code, Consolas, monospace";
+      ctx.textBaseline = "bottom";
+      ctx.fillStyle = "rgba(203,213,225,.9)";
+      drawOutlinedText(shortLabel(node.label.split("/").pop(), 24), point.x, point.y - radius - 5);
+    }
+    ctx.restore();
+    state.hitTargets.push({ node, x: point.x, y: point.y, radius: Math.max(9, radius + 2) });
+    state.visibleFiles.add(node.id);
+    return true;
+  }
+
+  function drawSymbol(node, alpha) {
+    const point = worldToScreen(node);
+    if (!inViewport(point, 25)) return false;
+    const radius = symbolScreenRadius(node) - 1.5;
+    const selected = state.selected?.id === node.id;
+    const hovered = state.hovered?.id === node.id;
+    const dim = focusAlpha(node);
+
+    ctx.save();
+    ctx.globalAlpha = alpha * dim;
+    const imageSize = radius * 5;
+    ctx.drawImage(symbolSprite(risk(node) > 0), point.x - imageSize / 2, point.y - imageSize / 2, imageSize, imageSize);
+    if (selected || hovered) {
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.font = "10px Cascadia Code, Consolas, monospace";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#e0f2fe";
+      drawOutlinedText(shortLabel(node.label, 32), point.x + radius + 6, point.y, "left");
+    }
+    ctx.restore();
+    state.hitTargets.push({ node, x: point.x, y: point.y, radius: Math.max(7, radius + 2) });
+    state.visibleSymbols.add(node.id);
+    return true;
+  }
+
+  function focusAlpha(node) {
+    const focus = state.hovered || state.selected;
+    if (!focus || focus.type === "project") return 1;
+    if (focus.type === "symbol") {
+      if (node.id === focus.id || node.id === focus.fileId || node.fileId === focus.fileId) return 1;
+      if (node.id === focus.ownerDirectory) return 1;
+      return .05;
+    }
+    if (focus.type === "file") {
+      if (node.id === focus.id || node.fileId === focus.id || node.id === focus.ownerDirectory) return 1;
+      return .05;
+    }
+    if (focus.type === "directory") {
+      if (node.id === focus.id || node.ownerDirectory === focus.id || isDescendant(node, focus)) return 1;
+      return .05;
+    }
+    return 1;
+  }
+
+  function isDescendant(node, ancestor) {
+    let current = node;
+    for (let guard = 0; guard < 10 && current?.parent; guard++) {
+      if (current.parent === ancestor.id) return true;
+      current = state.nodes.get(current.parent);
+    }
+    return false;
+  }
+
+  function shortLabel(label, max) {
+    if (!label || label.length <= max) return label || "";
+    return `${label.slice(0, max - 1)}…`;
+  }
+
+  // ?web=1 — "causal web" showcase mode: render symbols for many files at once
+  // and surface the wormhole web at a wider zoom (used for the demo reel). The
+  // default curated LOD is unchanged.
+  const WEB = new URLSearchParams(location.search).has("web");
+
+  function activeSymbolFiles() {
+    const focus = state.hovered || state.selected;
+    if (focus?.type === "symbol") return new Set([focus.fileId]);
+    if (focus?.type === "file") return new Set([focus.id]);
+
+    const centerWorld = {
+      x: (state.width / 2 - state.x) / state.scale,
+      y: (state.height / 2 - state.y) / state.scale,
+    };
+    return new Set(
+      state.files
+        .filter(file => state.visibleFiles.has(file.id))
+        .map(file => ({ file, distance: Math.hypot(file.x - centerWorld.x, file.y - centerWorld.y) }))
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, WEB ? 90 : (state.scale >= 4.2 ? 5 : 2))
+        .map(item => item.file.id)
+    );
+  }
+
+  function drawWormholes(alpha) {
+    if (alpha <= .02 || !state.visibleSymbols.size) {
+      state.activeEdges = [];
+      return;
+    }
+    const edges = [];
+    const edgeCap = WEB ? 1600 : 420;
+    for (const edge of state.graph.edges) {
+      if (!state.visibleSymbols.has(edge.from) || !state.visibleSymbols.has(edge.to)) continue;
+      edges.push(edge);
+      if (edges.length >= edgeCap) break;
+    }
+    state.activeEdges = edges;
+
+    for (const edge of edges) {
+      const from = state.nodes.get(edge.from);
+      const to = state.nodes.get(edge.to);
+      if (!from || !to) continue;
+      const geometry = wormholeGeometry(from, to);
+      if (!endpointIsVisible(geometry.fromCenter) || !endpointIsVisible(geometry.toCenter)) continue;
+
+      ctx.save();
+      ctx.globalAlpha = alpha * (WEB ? 0.55 : .12);
+      ctx.strokeStyle = edge.cross_language ? "#c084fc" : "#22d3ee";
+      ctx.lineWidth = WEB ? 1.0 : .65;
+      ctx.beginPath();
+      ctx.moveTo(geometry.start.x, geometry.start.y);
+      ctx.quadraticCurveTo(geometry.control.x, geometry.control.y, geometry.end.x, geometry.end.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawEffects(timestamp = performance.now()) {
+    fx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    fx.clearRect(0, 0, state.width, state.height);
+    const focus = state.hovered || state.selected;
+    if (focus?.type !== "symbol") return;
+    const edges = [
+      ...(state.incoming.get(focus.id) || []),
+      ...(state.outgoing.get(focus.id) || []),
+    ];
+    for (const edge of edges) {
+      const from = state.nodes.get(edge.from);
+      const to = state.nodes.get(edge.to);
+      if (!from || !to) continue;
+      if (!state.visibleSymbols.has(edge.from) || !state.visibleSymbols.has(edge.to)) continue;
+      const geometry = wormholeGeometry(from, to);
+      if (!endpointIsVisible(geometry.fromCenter) || !endpointIsVisible(geometry.toCenter)) continue;
+      fx.save();
+      fx.globalAlpha = 1;
+      fx.strokeStyle = edge.cross_language ? "#c084fc" : "#22d3ee";
+      fx.lineWidth = 2;
+      fx.setLineDash([4, 10]);
+      fx.lineDashOffset = -(timestamp * .035 % 28);
+      fx.shadowColor = "#22d3ee";
+      fx.shadowBlur = 6;
+      fx.beginPath();
+      fx.moveTo(geometry.start.x, geometry.start.y);
+      fx.quadraticCurveTo(geometry.control.x, geometry.control.y, geometry.end.x, geometry.end.y);
+      fx.stroke();
+      fx.restore();
+    }
+  }
+
+  function updateLevelHud(level) {
+    if (level !== state.level) state.level = level;
+    document.getElementById("lod-name").textContent = LEVELS[level].name;
+    document.querySelectorAll(".level-row").forEach(row => {
+      const rowLevel = Number(row.dataset.level);
+      row.classList.toggle("active", rowLevel === level);
+      row.classList.toggle("future", rowLevel > level);
+    });
+  }
+
+  function drawBase() {
+    ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    ctx.clearRect(0, 0, state.width, state.height);
+    state.hitTargets = [];
+    state.visibleFiles.clear();
+    state.visibleSymbols.clear();
+
+    const directoryAlpha = alphaForLevel(1);
+    const fileAlpha = alphaForLevel(2);
+    // WEB mode surfaces the symbol layer (and its wormholes) at a wider zoom so
+    // the whole causal web is visible at once.
+    const symbolAlpha = WEB ? smooth(state.scale, 1.25, 1.85) : alphaForLevel(3);
+    const nestedAlpha = smooth(state.scale, .9, 1.24);
+
+    if (directoryAlpha > .01) {
+      const root = state.root;
+      for (const directory of state.topDirectories) drawOrbit(root, directory, directoryAlpha * .32);
+      if (nestedAlpha > .01) {
+        for (const directory of state.allDirectories) {
+          const parent = state.nodes.get(directory.parent);
+          if (parent?.type === "directory") drawOrbit(parent, directory, nestedAlpha * .18);
+        }
+      }
+    }
+
+    if (fileAlpha > .02) {
+      const representative = new Map();
+      for (const file of state.files) {
+        const parent = state.nodes.get(file.parent);
+        if (!parent || representative.has(parent.id)) continue;
+        representative.set(parent.id, file);
+      }
+      for (const [parentId, file] of representative) {
+        const parent = state.nodes.get(parentId);
+        if (parent && inViewport(worldToScreen(parent), file.orbitRadius * state.scale + 90)) {
+          drawOrbit(parent, file, fileAlpha * .1, false);
+        }
+      }
+    }
+
+    drawRoot(clamp(1 - directoryAlpha * .55, .32, 1));
+    if (directoryAlpha > .01) {
+      for (const directory of state.topDirectories) drawPlanet(directory, directoryAlpha, false);
+      if (nestedAlpha > .01) {
+        for (const directory of state.allDirectories) {
+          if (!state.topDirectories.includes(directory)) drawPlanet(directory, nestedAlpha, true);
+        }
+      }
+    }
+
+    if (fileAlpha > .01) {
+      for (const file of state.files) drawFile(file, fileAlpha);
+    }
+
+    if (symbolAlpha > .01) {
+      const activeFiles = activeSymbolFiles();
+      for (const fileId of activeFiles) {
+        const file = state.nodes.get(fileId);
+        if (!file) continue;
+        for (const symbol of childrenOf(file, "symbol")) drawSymbol(symbol, symbolAlpha);
+      }
+      const focus = state.hovered || state.selected;
+      if (focus?.type === "symbol") {
+        const connected = [
+          ...(state.incoming.get(focus.id) || []),
+          ...(state.outgoing.get(focus.id) || []),
+        ];
+        for (const edge of connected) {
+          const otherId = edge.from === focus.id ? edge.to : edge.from;
+          if (state.visibleSymbols.has(otherId)) continue;
+          const other = state.nodes.get(otherId);
+          if (other && inViewport(worldToScreen(other), 25)) drawSymbol(other, symbolAlpha);
+        }
+      }
+      drawWormholes(symbolAlpha);
+    } else {
+      state.activeEdges = [];
+    }
+
+    grid.style.transform = `translate3d(${state.x * .1 % 72}px,${state.y * .1 % 72}px,0)`;
+    stars.style.transform = `translate3d(${state.x * .03 % 151}px,${state.y * .03 % 151}px,0)`;
+    updateLevelHud(currentLevel());
+    document.getElementById("visible-count").textContent = state.hitTargets.length.toLocaleString();
+  }
+
+  function requestDraw(animate = false, dirty = true) {
+    if (animate) state.pulseActive = true;
+    if (dirty) state.baseDirty = true;
+    if (!state.frameRequested) {
+      if (!state.loopActive) {
+        state.loopActive = true;
+        state.fpsFrames = 0;
+        state.fpsWindow = performance.now();
+      }
+      state.frameRequested = true;
+      requestAnimationFrame(frame);
+    }
+  }
+
+  function frame(timestamp) {
+    state.frameRequested = false;
+    const moving =
+      Math.abs(state.targetScale - state.scale) > .0004 ||
+      Math.abs(state.targetX - state.x) > .08 ||
+      Math.abs(state.targetY - state.y) > .08;
+
+    state.scale += (state.targetScale - state.scale) * .2;
+    state.x += (state.targetX - state.x) * .22;
+    state.y += (state.targetY - state.y) * .22;
+
+    let inertia = false;
+    if (!state.dragging && (Math.abs(state.velocityX) > .08 || Math.abs(state.velocityY) > .08)) {
+      state.targetX += state.velocityX;
+      state.targetY += state.velocityY;
+      state.velocityX *= .88;
+      state.velocityY *= .88;
+      inertia = true;
+    }
+
+    state.fpsFrames++;
+    if (timestamp - state.fpsWindow >= 500 && state.fpsFrames >= 8) {
+      state.fps = Math.round(state.fpsFrames * 1000 / (timestamp - state.fpsWindow));
+      state.fpsFrames = 0;
+      state.fpsWindow = timestamp;
+      const fps = document.getElementById("fps");
+      fps.textContent = `${Math.min(99, state.fps)} FPS`;
+      fps.className = state.fps >= 52 ? "good tabular" : state.fps >= 35 ? "warn tabular" : "bad tabular";
+    }
+
+    const hasHotWormholes = (state.hovered || state.selected)?.type === "symbol";
+    state.pulseActive = hasHotWormholes;
+    if (state.baseDirty || moving || inertia || state.dragging) {
+      drawBase();
+      state.baseDirty = false;
+    }
+    drawEffects(timestamp);
+    if (moving || inertia || state.dragging || hasHotWormholes) {
+      state.frameRequested = true;
+      requestAnimationFrame(frame);
+    } else {
+      state.loopActive = false;
+    }
+  }
+
+  function zoomAt(factor, clientX = state.width / 2, clientY = state.height / 2) {
+    const worldX = (clientX - state.targetX) / state.targetScale;
+    const worldY = (clientY - state.targetY) / state.targetScale;
+    state.targetScale = clamp(state.targetScale * factor, .28, 6);
+    state.targetX = clientX - worldX * state.targetScale;
+    state.targetY = clientY - worldY * state.targetScale;
+    state.velocityX = state.velocityY = 0;
+    requestDraw();
+  }
+
+  function cameraCenterY() {
+    return state.height / 2 + (state.width < 900 ? 40 : 30);
+  }
+
+  function flyTo(node, scale) {
+    if (!node) return;
+    state.targetScale = clamp(scale, .28, 6);
+    state.targetX = state.width / 2 - node.x * state.targetScale;
+    state.targetY = cameraCenterY() - node.y * state.targetScale;
+    state.velocityX = state.velocityY = 0;
+    requestDraw();
+  }
+
+  function resetView() {
+    closePanel();
+    state.targetScale = .36;
+    state.targetX = state.width / 2;
+    state.targetY = cameraCenterY();
+    state.velocityX = state.velocityY = 0;
+    requestDraw();
+  }
+
+  function hitTest(x, y) {
+    for (let index = state.hitTargets.length - 1; index >= 0; index--) {
+      const target = state.hitTargets[index];
+      if (Math.hypot(x - target.x, y - target.y) <= target.radius) return target.node;
+    }
+    return null;
+  }
+
+  function showTooltip(node, x, y) {
+    tooltip.innerHTML = `${escapeHtml(node.label)}<small>${escapeHtml(node.rel || node.type)}${node.line_start ? `:${node.line_start}` : ""}</small>`;
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+    tooltip.classList.add("show");
+  }
+
+  function edgeChip(edge, role) {
+    const targetId = role === "outgoing" ? edge.to : edge.from;
+    const target = state.nodes.get(targetId);
+    if (!target) return "";
+    return `<button class="edge-chip" data-jump="${escapeHtml(target.id)}">
+      <b class="mono">${escapeHtml(target.label)}</b><em>${role}</em>
+      <span class="mono">${escapeHtml(target.rel || target.lang || "")}</span><span>${escapeHtml(edge.label || "syntax")}</span>
+    </button>`;
+  }
+
+  function selectNode(node, navigate = true) {
+    if (!node) return;
+    state.selected = node;
+    state.hovered = null;
+    tooltip.classList.remove("show");
+
+    if (navigate) {
+      if (node.type === "project") flyTo(node, .82);
+      else if (node.type === "directory") flyTo(node, node.depth > 1 ? 2.05 : 1.55);
+      else if (node.type === "file") flyTo(node, 3.35);
+      else flyTo(node, 4.2);
+    }
+
+    const incoming = state.incoming.get(node.id) || [];
+    const outgoing = state.outgoing.get(node.id) || [];
+    document.getElementById("panel-lang").textContent = (node.lang || node.type || "--").slice(0, 5);
+    document.getElementById("panel-title").textContent = node.label || node.title || node.id;
+    document.getElementById("panel-path").textContent = node.path || node.rel || state.graph.root;
+    document.getElementById("panel-lines").textContent = node.line_start
+      ? `L${node.line_start}${node.line_end && node.line_end !== node.line_start ? `-${node.line_end}` : ""}` : "";
+    document.getElementById("panel-summary").textContent = node.summary || `${node.type} in ${state.graph.root_name}`;
+    document.getElementById("panel-code").textContent = node.detail || "No source payload exported for this node.";
+    document.getElementById("panel-risk").textContent = risk(node) ? `RISK ${risk(node)}` : "STABLE";
+    document.getElementById("panel-risk").style.color = risk(node) ? "var(--amber)" : "var(--green)";
+    document.getElementById("edge-list").innerHTML =
+      [...outgoing.slice(0, 16).map(edge => edgeChip(edge, "outgoing")),
+       ...incoming.slice(0, 16).map(edge => edgeChip(edge, "incoming"))].join("") ||
+      `<div class="summary">No causal wormholes touch this node.</div>`;
+    document.getElementById("out-count").textContent = outgoing.length;
+    document.getElementById("in-count").textContent = incoming.length;
+    document.getElementById("degree-count").textContent = outgoing.length + incoming.length;
+    panel.classList.add("open");
+    requestDraw(node.type === "symbol");
+
+    fetch("/api/camera", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ x: node.x, y: node.y, zoom_level: state.targetScale }),
+    }).catch(() => {});
+  }
+
+  function closePanel() {
+    panel.classList.remove("open");
+    state.selected = null;
+    state.pulseActive = false;
+    requestDraw();
+  }
+
+  function findBest(query) {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return null;
+    return [...state.nodes.values()]
+      .filter(node => node.type !== "project")
+      .map(node => {
+        const label = (node.label || "").toLowerCase();
+        const relative = (node.rel || "").toLowerCase();
+        let score = label === normalized ? 1000 :
+          label.startsWith(normalized) ? 500 :
+          label.includes(normalized) ? 250 :
+          relative.includes(normalized) ? 100 : 0;
+        return { node, score };
+      })
+      .filter(item => item.score)
+      .sort((a, b) => b.score - a.score || a.node.label.length - b.node.label.length)[0]?.node || null;
+  }
+
+  function bindEvents() {
+    stage.addEventListener("wheel", event => {
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      zoomAt(Math.exp(-event.deltaY * .00125), event.clientX - rect.left, event.clientY - rect.top);
+    }, { passive: false });
+
+    canvas.addEventListener("pointerdown", event => {
+      state.dragging = true;
+      state.moved = false;
+      state.pointerX = event.clientX;
+      state.pointerY = event.clientY;
+      state.velocityX = state.velocityY = 0;
+      stage.classList.add("grabbing");
+      canvas.setPointerCapture(event.pointerId);
+      requestDraw();
+    });
+
+    canvas.addEventListener("pointermove", event => {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      if (state.dragging) {
+        const dx = event.clientX - state.pointerX;
+        const dy = event.clientY - state.pointerY;
+        state.pointerX = event.clientX;
+        state.pointerY = event.clientY;
+        if (Math.abs(dx) + Math.abs(dy) > 1) state.moved = true;
+        state.targetX += dx;
+        state.targetY += dy;
+        state.x += dx;
+        state.y += dy;
+        state.velocityX = dx;
+        state.velocityY = dy;
+        requestDraw();
+        return;
+      }
+      const node = hitTest(x, y);
+      if (node?.id !== state.hovered?.id) {
+        state.hovered = node;
+        canvas.style.cursor = node ? "pointer" : "grab";
+        if (node) showTooltip(node, event.clientX, event.clientY);
+        else tooltip.classList.remove("show");
+        requestDraw(node?.type === "symbol");
+      } else if (node) {
+        tooltip.style.left = `${event.clientX}px`;
+        tooltip.style.top = `${event.clientY}px`;
+      }
+    });
+
+    canvas.addEventListener("pointerup", event => {
+      const rect = canvas.getBoundingClientRect();
+      state.dragging = false;
+      stage.classList.remove("grabbing");
+      if (!state.moved) {
+        const node = hitTest(event.clientX - rect.left, event.clientY - rect.top);
+        if (node) selectNode(node);
+      }
+      requestDraw();
+    });
+
+    canvas.addEventListener("pointerleave", () => {
+      if (!state.dragging) {
+        state.hovered = null;
+        tooltip.classList.remove("show");
+        requestDraw();
+      }
+    });
+
+    document.getElementById("edge-list").addEventListener("click", event => {
+      const target = event.target.closest("[data-jump]");
+      if (target) selectNode(state.nodes.get(target.dataset.jump));
+    });
+    document.getElementById("panel-close").addEventListener("click", closePanel);
+    document.getElementById("zoom-in").addEventListener("click", () => zoomAt(1.42));
+    document.getElementById("zoom-out").addEventListener("click", () => zoomAt(.7));
+    document.getElementById("reset").addEventListener("click", resetView);
+    search.addEventListener("keydown", event => {
+      if (event.key !== "Enter") return;
+      const node = findBest(search.value);
+      if (node) selectNode(node);
+    });
+    window.addEventListener("keydown", event => {
+      if (event.key === "Escape") closePanel();
+      if (event.key === "/" && document.activeElement !== search) {
+        event.preventDefault();
+        search.focus();
+      }
+    });
+    window.addEventListener("resize", resize);
+  }
+
+  async function boot() {
+    try {
+      // Live graph from `droste view`; fall back to the bundled public demo
+      // (Droste indexing itself) so the repo is explorable with zero setup.
+      let graphResponse = await fetch("graph.json", { cache: "no-store" }).catch(() => null);
+      if (!graphResponse || !graphResponse.ok) {
+        graphResponse = await fetch("demo_graph.json", { cache: "no-store" });
+      }
+      const statusResponse = await fetch("status.json", { cache: "no-store" }).catch(() => null);
+      if (!graphResponse.ok) throw new Error(`graph data returned HTTP ${graphResponse.status}`);
+      state.graph = await graphResponse.json();
+      state.status = statusResponse?.ok ? await statusResponse.json() : null;
+      if (!Array.isArray(state.graph.nodes) || !Array.isArray(state.graph.edges)) {
+        throw new Error("graph.json does not contain nodes and edges arrays");
+      }
+      buildIndexes();
+      assignLayout();
+      resize();
+      state.x = state.targetX = state.width / 2;
+      state.y = state.targetY = cameraCenterY();
+      document.getElementById("project-name").textContent =
+        `${state.graph.root_name || "droste-memory"} / ${state.graph.counts.symbol.toLocaleString()} symbols`;
+      bindEvents();
+      drawBase();
+      loading.classList.add("done");
+    } catch (error) {
+      document.getElementById("error").textContent =
+        `Unable to load the live graph. Start the local visualizer server and retry. ${error.message}`;
+    }
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

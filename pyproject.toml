@@ -1,0 +1,41 @@
+[project]
+name = "droste-memory"
+version = "1.0.0"
+readme = "README.md"
+description = "Local hybrid structural and semantic graph memory engine."
+requires-python = ">=3.10"
+# Core runtime. fastembed (ONNX, no torch) is the default semantic backend and
+# tree-sitter-language-pack powers the polyglot call-graph — both are REQUIRED,
+# not optional: a missing install silently degrades retrieval (the dormant-moat
+# bug). sentence-transformers (torch) is an opt-in heavy fallback, not core.
+dependencies = [
+    "mcp>=1.2.0",
+    "numpy>=1.24.0",
+    "scikit-learn>=1.3.0",
+    "fastembed>=0.8.0",
+    "truststore>=0.10.0",
+    "pydantic>=2.0.0",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+    "tree-sitter>=0.23.0",
+    "tree-sitter-language-pack>=1.9.0",
+]
+
+[project.optional-dependencies]
+heavy-embed = ["sentence-transformers>=2.7.0"]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+droste = "core.droste_cli:main"
+
+[tool.pytest.ini_options]
+# Deterministic regression suite lives in tests/; eval/ stays benchmark-only.
+minversion = "7.0"
+testpaths = ["tests"]
+addopts = "-ra -v --tb=short"
+markers = [
+    "slow: concurrency / timing tests (cross-process shard race)",
+]
+
+[tool.setuptools.packages.find]
+include = ["core*"]

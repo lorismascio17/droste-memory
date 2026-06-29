@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Droste-Memory Visualizer</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #10100f;
+        --panel: #191917;
+        --panel-2: #23231f;
+        --ink: #f3f0e8;
+        --muted: #aaa59a;
+        --line: #3b3931;
+        --green: #44d68c;
+        --amber: #ffbd59;
+        --pink: #f06aa3;
+        --cyan: #73dce6;
+        --red: #ff6b6b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      #app {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .stage {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        border-right: 1px solid var(--line);
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      canvas.is-dragging {
+        cursor: grabbing;
+      }
+
+      .hud {
+        position: absolute;
+        left: 18px;
+        top: 18px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 10px;
+        border: 1px solid rgba(243, 240, 232, 0.14);
+        border-radius: 8px;
+        background: rgba(16, 16, 15, 0.78);
+        backdrop-filter: blur(8px);
+      }
+
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 16px rgba(68, 214, 140, 0.85);
+      }
+
+      .hud strong {
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .hud span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      aside {
+        min-width: 0;
+        overflow-y: auto;
+        background: var(--panel);
+      }
+
+      .panel {
+        display: flex;
+        min-height: 100%;
+        flex-direction: column;
+        gap: 18px;
+        padding: 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 19px;
+        line-height: 1.15;
+      }
+
+      .status-pill {
+        min-width: 72px;
+        padding: 5px 8px;
+        border: 1px solid rgba(68, 214, 140, 0.34);
+        border-radius: 999px;
+        color: var(--green);
+        text-align: center;
+        font-size: 12px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .stat {
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+      }
+
+      .stat .label {
+        margin-bottom: 5px;
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+      }
+
+      .stat .value {
+        min-height: 24px;
+        overflow-wrap: anywhere;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .tool-button {
+        min-height: 36px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #26251f;
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 13px;
+      }
+
+      .tool-button:hover {
+        border-color: rgba(115, 220, 230, 0.52);
+      }
+
+      .form {
+        display: grid;
+        gap: 8px;
+      }
+
+      label {
+        display: grid;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #121210;
+        color: var(--ink);
+        outline: none;
+        padding: 9px 10px;
+      }
+
+      textarea {
+        min-height: 74px;
+        resize: vertical;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: var(--cyan);
+      }
+
+      .primary {
+        min-height: 38px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--green);
+        color: #07130d;
+        cursor: pointer;
+        font-weight: 800;
+      }
+
+      .nodes {
+        display: grid;
+        gap: 8px;
+      }
+
+      .focus-panel {
+        display: grid;
+        gap: 8px;
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+
+      .focus-title {
+        overflow-wrap: anywhere;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .focus-summary {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .focus-detail {
+        min-height: 96px;
+        max-height: 220px;
+        overflow: auto;
+        margin: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #11110f;
+        color: rgba(243, 240, 232, 0.82);
+        font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.45;
+        padding: 10px;
+        white-space: pre-wrap;
+      }
+
+      .node-row {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #151513;
+        color: inherit;
+        font: inherit;
+        padding: 10px;
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .node-row:hover {
+        border-color: rgba(255, 189, 89, 0.5);
+      }
+
+      .node-row strong {
+        display: block;
+        margin-bottom: 4px;
+        overflow-wrap: anywhere;
+        font-size: 13px;
+      }
+
+      .node-row p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .node-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .tag {
+        border-radius: 999px;
+        padding: 3px 7px;
+        background: #25241f;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .tag.unlocked {
+        color: var(--green);
+      }
+
+      .tag.locked {
+        color: var(--amber);
+      }
+
+      .tag.outside {
+        color: var(--pink);
+      }
+
+      @media (max-width: 880px) {
+        #app {
+          grid-template-columns: 1fr;
+          grid-template-rows: minmax(0, 1fr) 320px;
+        }
+
+        .stage {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        aside {
+          border-left: 0;
+        }
+
+        .panel {
+          min-height: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="app">
+      <section class="stage">
+        <canvas id="space"></canvas>
+        <div class="hud">
+          <span class="dot"></span>
+          <strong>Droste-Memory</strong>
+          <span id="updated">sync</span>
+        </div>
+      </section>
+      <aside>
+        <div class="panel">
+          <div class="brand">
+            <h1>Spazio frattale</h1>
+            <span class="status-pill" id="status">live</span>
+          </div>
+
+          <section class="stats" aria-label="Stato">
+            <div class="stat">
+              <div class="label">Nodi</div>
+              <div class="value" id="nodeCount">0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Visibili</div>
+              <div class="value" id="visibleCount">0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Zoom</div>
+              <div class="value" id="zoomValue">1.00x</div>
+            </div>
+            <div class="stat">
+              <div class="label">FOV</div>
+              <div class="value" id="fovValue">2.00</div>
+            </div>
+          </section>
+
+          <section class="toolbar" aria-label="Camera">
+            <button class="tool-button" id="refreshButton" title="Aggiorna">Refresh</button>
+            <button class="tool-button" id="homeButton" title="Camera a zero">Home</button>
+            <button class="tool-button" id="fitButton" title="Vista completa">Fit</button>
+            <button class="tool-button" id="seedButton" title="Reset demo">Seed</button>
+            <button class="tool-button" id="deepButton" title="Zoom profondo">Deep</button>
+          </section>
+
+          <section class="focus-panel" aria-label="Focus">
+            <div class="focus-title" id="focusTitle">Focus</div>
+            <p class="focus-summary" id="focusSummary"></p>
+            <pre class="focus-detail" id="focusDetail"></pre>
+          </section>
+
+          <form class="form" id="injectForm">
+            <label>
+              Titolo
+              <input id="titleInput" maxlength="90" placeholder="Flutter auth flow" required />
+            </label>
+            <label>
+              Summary
+              <textarea id="summaryInput" maxlength="320" placeholder="Contesto compatto del concetto"></textarea>
+            </label>
+            <label>
+              Detail
+              <textarea id="detailInput" placeholder="Codice, note, formule, decisioni"></textarea>
+            </label>
+            <label>
+              Zoom unlock
+              <input id="thresholdInput" type="number" min="0.1" step="0.1" value="20" />
+            </label>
+            <button class="primary" type="submit">Inject concept</button>
+          </form>
+
+          <section class="nodes" id="nodesList" aria-label="Nodi"></section>
+        </div>
+      </aside>
+    </main>
+
+    <script>
+      const canvas = document.querySelector("#space");
+      const ctx = canvas.getContext("2d");
+      const VIEW_SCALE = 0.21;
+      const LINK_ZOOM_MIN = 10;
+      const SELECTED_LINK_ZOOM_MIN = 8;
+      const MAX_LINKS_PER_FRAME = 140;
+      const NODE_ALPHA_MIN = 0.08;
+      const LINK_ALPHA_MIN = 0.55;
+      const state = {
+        data: { camera: { x: 0, y: 0, zoom: 1 }, nodes: [], fov: 2 },
+        visualCamera: { x: 0, y: 0, zoom: 1 },
+        deviceScale: 1,
+        selectedNodeId: null,
+        drag: {
+          active: false,
+          moved: false,
+          pointerId: null,
+          lastX: 0,
+          lastY: 0
+        },
+        cameraCommitTimer: null,
+        cameraCommitInFlight: false,
+        localCameraDirty: false,
+        suspendFetchUntil: 0
+      };
+
+      const fields = {
+        nodeCount: document.querySelector("#nodeCount"),
+        visibleCount: document.querySelector("#visibleCount"),
+        zoomValue: document.querySelector("#zoomValue"),
+        fovValue: document.querySelector("#fovValue"),
+        updated: document.querySelector("#updated"),
+        status: document.querySelector("#status"),
+        nodesList: document.querySelector("#nodesList"),
+        focusTitle: document.querySelector("#focusTitle"),
+        focusSummary: document.querySelector("#focusSummary"),
+        focusDetail: document.querySelector("#focusDetail")
+      };
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        state.deviceScale = window.devicePixelRatio || 1;
+        canvas.width = Math.max(1, Math.floor(rect.width * state.deviceScale));
+        canvas.height = Math.max(1, Math.floor(rect.height * state.deviceScale));
+      }
+
+      function worldToScreen(x, y) {
+        const width = canvas.width / state.deviceScale;
+        const height = canvas.height / state.deviceScale;
+        const base = viewBase(width, height);
+        const scale = base * state.visualCamera.zoom;
+        return {
+          x: width / 2 + (x - state.visualCamera.x) * scale,
+          y: height / 2 + (y - state.visualCamera.y) * scale
+        };
+      }
+
+      function viewBase(width = canvas.width / state.deviceScale, height = canvas.height / state.deviceScale) {
+        return Math.min(width, height) * VIEW_SCALE;
+      }
+
+      function niceWorldStep(targetWorldStep) {
+        const exponent = Math.pow(10, Math.floor(Math.log10(Math.max(targetWorldStep, 1e-6))));
+        for (const multiplier of [1, 2, 5, 10]) {
+          const step = multiplier * exponent;
+          if (step >= targetWorldStep) return step;
+        }
+        return 10 * exponent;
+      }
+
+      function screenToWorld(clientX, clientY, camera = state.data.camera) {
+        const rect = canvas.getBoundingClientRect();
+        const width = canvas.width / state.deviceScale;
+        const height = canvas.height / state.deviceScale;
+        const base = viewBase(width, height);
+        const zoom = Math.max(0.1, Number(camera.zoom || 1));
+        const scale = base * zoom;
+        const x = (clientX - rect.left - width / 2) / scale + Number(camera.x || 0);
+        const y = (clientY - rect.top - height / 2) / scale + Number(camera.y || 0);
+        return { x: clamp(x, -1, 1), y: clamp(y, -1, 1) };
+      }
+
+      function clamp(value, minimum, maximum) {
+        return Math.max(minimum, Math.min(maximum, Number(value) || 0));
+      }
+
+      function drawGrid(width, height) {
+        const scale = viewBase(width, height) * state.visualCamera.zoom;
+        const worldStep = niceWorldStep(64 / Math.max(scale, 1e-6));
+        const step = clamp(worldStep * scale, 34, 92);
+        const origin = worldToScreen(0, 0);
+        ctx.save();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(243, 240, 232, 0.06)";
+        ctx.beginPath();
+        for (let x = origin.x % step; x < width; x += step) {
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+        }
+        for (let y = origin.y % step; y < height; y += step) {
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawFov(width, height) {
+        const cameraPoint = worldToScreen(state.data.camera.x, state.data.camera.y);
+        const edgePoint = worldToScreen(state.data.camera.x + state.data.fov, state.data.camera.y);
+        const radius = Math.abs(edgePoint.x - cameraPoint.x);
+        ctx.save();
+        ctx.strokeStyle = "rgba(115, 220, 230, 0.35)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawLinks(width, height, nodesById) {
+        const links = state.data.links || [];
+        if (!links.length) return;
+        const zoom = Number(state.visualCamera.zoom || 1);
+        const selectedId = state.selectedNodeId;
+        if (zoom < LINK_ZOOM_MIN && !selectedId) return;
+
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([6, 7]);
+        ctx.lineDashOffset = -performance.now() / 85;
+
+        let drawn = 0;
+        for (const link of links) {
+          const from = nodesById.get(link.from);
+          const to = nodesById.get(link.to);
+          if (!from || !to) continue;
+
+          const selected =
+            from.id === state.selectedNodeId || to.id === state.selectedNodeId;
+          const selectedDeep = selected && zoom >= SELECTED_LINK_ZOOM_MIN;
+          if (zoom < LINK_ZOOM_MIN && !selectedDeep) continue;
+          const fromAlpha = nodeOpacity(from);
+          const toAlpha = nodeOpacity(to);
+          if (!from.visible || !to.visible) continue;
+          if (fromAlpha < LINK_ALPHA_MIN || toAlpha < LINK_ALPHA_MIN) continue;
+
+          const a = worldToScreen(from.x, from.y);
+          const b = worldToScreen(to.x, to.y);
+          if (!segmentNearScreen(a, b, width, height, 180)) continue;
+
+          const alpha = (selected ? 0.56 : 0.28) * Math.min(fromAlpha, toAlpha);
+          const midX = (a.x + b.x) / 2;
+          const midY = (a.y + b.y) / 2;
+          const bend = Math.min(48, Math.hypot(a.x - b.x, a.y - b.y) * 0.16);
+          const normalX = b.y - a.y;
+          const normalY = a.x - b.x;
+          const normalLength = Math.hypot(normalX, normalY) || 1;
+          const controlX = midX + (normalX / normalLength) * bend;
+          const controlY = midY + (normalY / normalLength) * bend;
+
+          ctx.globalAlpha = alpha;
+          ctx.strokeStyle = link.type === "dependency"
+            ? "rgba(115, 220, 230, 0.9)"
+            : "rgba(255, 189, 89, 0.7)";
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.quadraticCurveTo(controlX, controlY, b.x, b.y);
+          ctx.stroke();
+          drawn += 1;
+
+          if (selected && link.label) {
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 0.82;
+            ctx.fillStyle = "rgba(16, 16, 15, 0.86)";
+            ctx.strokeStyle = "rgba(115, 220, 230, 0.35)";
+            ctx.font = "11px Inter, sans-serif";
+            const label = String(link.label).slice(0, 28);
+            const labelWidth = ctx.measureText(label).width + 16;
+            roundRect(controlX - labelWidth / 2, controlY - 13, labelWidth, 22, 7);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = "#73dce6";
+            ctx.fillText(label, controlX - labelWidth / 2 + 8, controlY + 2);
+            ctx.setLineDash([6, 7]);
+          }
+
+          if (drawn >= MAX_LINKS_PER_FRAME) break;
+        }
+
+        ctx.restore();
+      }
+
+      function drawNode(node) {
+        const basePoint = worldToScreen(node.x, node.y);
+        const stackIndex = node._stackIndex || 0;
+        const stackCount = node._stackCount || 1;
+        const laneOffset = stackCount > 1 ? (stackIndex - (stackCount - 1) / 2) * 92 : 0;
+        const point = {
+          x: basePoint.x,
+          y: basePoint.y + laneOffset
+        };
+        const unlocked = node.detail_state === "unlocked";
+        const visible = node.visible;
+        const outside = node.detail_state === "outside_fov";
+        const zoom = Number(state.visualCamera.zoom || 1);
+        const threshold = Math.max(0.1, Number(node.zoom_threshold || 1));
+        const revealProgress = clamp01(zoom / threshold);
+        const hint = !visible && node.detail_state === "locked";
+        const opacity = nodeOpacity(node);
+        if (opacity <= 0) return;
+        const macroPreview = node.node_type === "project" && hint && opacity > 0.22;
+        const radius = unlocked ? 8 : hint ? 4 + revealProgress * 4 : visible ? 6 : 4;
+        const ringRadius = radius + stackIndex * 7;
+        const alpha = outside ? 0 : opacity * (hint ? 0.62 : 0.76 + node.focus * 0.24);
+        const fill = unlocked ? "#44d68c" : hint ? "#73dce6" : visible ? "#ffbd59" : "#f06aa3";
+        const selected = node.id === state.selectedNodeId;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.shadowBlur = unlocked ? 22 : 12;
+        ctx.shadowColor = fill;
+        ctx.fillStyle = fill;
+        ctx.beginPath();
+        ctx.arc(basePoint.x, basePoint.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        if (hint && opacity > 0.18) {
+          const pulse = 10 + revealProgress * 24 + Math.sin(performance.now() / 420) * 2;
+          ctx.globalAlpha = opacity * 0.42;
+          ctx.strokeStyle = fill;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([3, 7]);
+          ctx.beginPath();
+          ctx.arc(basePoint.x, basePoint.y, pulse, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        if (selected) {
+          ctx.globalAlpha = 0.9;
+          ctx.strokeStyle = "#f3f0e8";
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          ctx.arc(basePoint.x, basePoint.y, ringRadius + 12, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        if (stackCount > 1) {
+          ctx.globalAlpha = opacity * 0.72;
+          ctx.strokeStyle = fill;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(basePoint.x, basePoint.y, ringRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.globalAlpha = opacity * 0.42;
+          ctx.beginPath();
+          ctx.moveTo(basePoint.x + ringRadius + 5, basePoint.y);
+          ctx.lineTo(point.x + 10, point.y - 6);
+          ctx.stroke();
+        }
+
+        if (opacity > 0.42 && (visible || macroPreview || hint)) {
+          ctx.globalAlpha = Math.min(1, opacity + 0.18);
+          const preview = node.detail_preview || "";
+          const showDetail = unlocked && state.visualCamera.zoom > 8;
+          const textLines = showDetail ? Math.min(4, Math.ceil(preview.length / 38)) : 2;
+          const boxHeight = showDetail ? 30 + textLines * 15 : 46;
+          const boxWidth = showDetail ? 330 : 270;
+          const isMicro = node.node_type === "symbol" || node.node_type === "section";
+          ctx.fillStyle = isMicro ? "rgba(6, 6, 5, 0.96)" : "rgba(16, 16, 15, 0.9)";
+          ctx.strokeStyle = isMicro ? "rgba(243, 240, 232, 0.22)" : "rgba(243, 240, 232, 0.12)";
+          ctx.lineWidth = 1;
+          roundRect(point.x + 8, point.y - 22, boxWidth, boxHeight, 7);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = "#f3f0e8";
+          ctx.font = unlocked ? "700 13px Inter, sans-serif" : "600 12px Inter, sans-serif";
+          ctx.fillText(node.title, point.x + 12, point.y - 7);
+
+          if (showDetail) {
+            ctx.fillStyle = "rgba(243, 240, 232, 0.72)";
+            ctx.font = "12px Inter, sans-serif";
+            wrapText(preview, point.x + 12, point.y + 12, 280, 15, 4);
+          } else if (visible || macroPreview) {
+            ctx.fillStyle = "rgba(243, 240, 232, 0.56)";
+            ctx.font = "12px Inter, sans-serif";
+            wrapText(node.summary || "", point.x + 12, point.y + 12, 240, 15, 2);
+          }
+        }
+
+        ctx.restore();
+      }
+
+      function clamp01(value) {
+        return Math.max(0, Math.min(1, Number(value) || 0));
+      }
+
+      function smoothstep(edge0, edge1, value) {
+        if (edge0 === edge1) return value >= edge1 ? 1 : 0;
+        const t = clamp01((value - edge0) / (edge1 - edge0));
+        return t * t * (3 - 2 * t);
+      }
+
+      function nodeOpacity(node) {
+        if (!node || node.detail_state === "outside_fov") return 0;
+        if (node.id === state.selectedNodeId) return 1;
+        const zoom = Number(state.visualCamera.zoom || 1);
+        const threshold = Math.max(0.1, Number(node.zoom_threshold || 1));
+        const fadeStart = threshold * 0.78;
+        const fadeEnd = threshold * 1.08;
+        const alpha = smoothstep(fadeStart, fadeEnd, zoom);
+        if (node.visible) return alpha;
+        if (node.detail_state === "locked") return alpha * 0.72;
+        return alpha;
+      }
+
+      function roundRect(x, y, width, height, radius) {
+        const r = Math.min(radius, width / 2, height / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + width, y, x + width, y + height, r);
+        ctx.arcTo(x + width, y + height, x, y + height, r);
+        ctx.arcTo(x, y + height, x, y, r);
+        ctx.arcTo(x, y, x + width, y, r);
+        ctx.closePath();
+      }
+
+      function wrapText(text, x, y, maxWidth, lineHeight, maxLines) {
+        const words = String(text).split(/\s+/).filter(Boolean);
+        let line = "";
+        let lines = 0;
+        for (const word of words) {
+          const testLine = line ? `${line} ${word}` : word;
+          if (ctx.measureText(testLine).width > maxWidth && line) {
+            ctx.fillText(line, x, y);
+            line = word;
+            y += lineHeight;
+            lines += 1;
+            if (lines >= maxLines) return;
+          } else {
+            line = testLine;
+          }
+        }
+        if (line && lines < maxLines) ctx.fillText(line, x, y);
+      }
+
+      function draw() {
+        const camera = state.data.camera || { x: 0, y: 0, zoom: 1 };
+        state.visualCamera.x += (camera.x - state.visualCamera.x) * 0.08;
+        state.visualCamera.y += (camera.y - state.visualCamera.y) * 0.08;
+        state.visualCamera.zoom += (camera.zoom - state.visualCamera.zoom) * 0.08;
+
+        const width = canvas.width / state.deviceScale;
+        const height = canvas.height / state.deviceScale;
+        ctx.setTransform(state.deviceScale, 0, 0, state.deviceScale, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+
+        ctx.fillStyle = "#10100f";
+        ctx.fillRect(0, 0, width, height);
+        drawGrid(width, height);
+        drawFov(width, height);
+
+        const allNodesById = new Map((state.data.nodes || []).map((node) => [node.id, node]));
+        drawLinks(width, height, allNodesById);
+
+        const nodes = prepareNodesForDrawing(state.data.nodes || [], width, height);
+        for (const node of [...nodes].reverse()) drawNode(node);
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(243, 240, 232, 0.55)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(width / 2 - 8, height / 2);
+        ctx.lineTo(width / 2 + 8, height / 2);
+        ctx.moveTo(width / 2, height / 2 - 8);
+        ctx.lineTo(width / 2, height / 2 + 8);
+        ctx.stroke();
+        ctx.restore();
+
+        requestAnimationFrame(draw);
+      }
+
+      function useLocalCamera(camera) {
+        state.data.camera = camera;
+        state.data.fov = 2.0 / Math.max(0.1, Number(camera.zoom || 1));
+        state.visualCamera.x = camera.x;
+        state.visualCamera.y = camera.y;
+        state.visualCamera.zoom = camera.zoom;
+        state.localCameraDirty = true;
+        state.suspendFetchUntil = Date.now() + 450;
+      }
+
+      function prepareNodesForDrawing(nodes, width, height) {
+        const groups = new Map();
+        for (const node of nodes) {
+          if (!shouldDrawNode(node, width, height)) continue;
+          const key = `${Number(node.x).toFixed(3)}:${Number(node.y).toFixed(3)}`;
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(node);
+        }
+
+        const prepared = [];
+        for (const group of groups.values()) {
+          group.sort((a, b) => Number(a.zoom_threshold) - Number(b.zoom_threshold));
+          group.forEach((node, index) => {
+            prepared.push({
+              ...node,
+              _stackIndex: index,
+              _stackCount: group.length
+            });
+          });
+        }
+
+        return prepared.sort((a, b) => {
+          const distanceDelta = Number(a.distance || 0) - Number(b.distance || 0);
+          if (Math.abs(distanceDelta) > 1e-9) return distanceDelta;
+          return Number(a.zoom_threshold || 0) - Number(b.zoom_threshold || 0);
+        });
+      }
+
+      function shouldDrawNode(node, width, height) {
+        if (node.id === state.selectedNodeId) return true;
+        const point = worldToScreen(node.x, node.y);
+        if (!pointNearScreen(point, width, height, 360)) return false;
+        if (node.detail_state === "outside_fov") return false;
+        return nodeOpacity(node) >= NODE_ALPHA_MIN;
+      }
+
+      function pointNearScreen(point, width, height, pad) {
+        return (
+          point.x >= -pad &&
+          point.y >= -pad &&
+          point.x <= width + pad &&
+          point.y <= height + pad
+        );
+      }
+
+      function segmentNearScreen(a, b, width, height, pad) {
+        if (pointNearScreen(a, width, height, pad) || pointNearScreen(b, width, height, pad)) {
+          return true;
+        }
+        const minX = Math.min(a.x, b.x);
+        const maxX = Math.max(a.x, b.x);
+        const minY = Math.min(a.y, b.y);
+        const maxY = Math.max(a.y, b.y);
+        return !(maxX < -pad || minX > width + pad || maxY < -pad || minY > height + pad);
+      }
+
+      async function fetchState() {
+        const now = Date.now();
+        if (
+          state.drag.active ||
+          state.cameraCommitInFlight ||
+          state.localCameraDirty ||
+          now < state.suspendFetchUntil
+        ) {
+          return;
+        }
+        try {
+          const response = await fetch("/api/state", { cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const nextData = await response.json();
+          if (
+            state.drag.active ||
+            state.cameraCommitInFlight ||
+            state.localCameraDirty ||
+            Date.now() < state.suspendFetchUntil
+          ) {
+            return;
+          }
+          state.data = nextData;
+          fields.status.textContent = "live";
+          renderPanel();
+        } catch (error) {
+          fields.status.textContent = "offline";
+          console.error(error);
+        }
+      }
+
+      function renderPanel() {
+        const camera = state.data.camera || { zoom: 1 };
+        fields.nodeCount.textContent = state.data.node_count ?? 0;
+        fields.visibleCount.textContent = state.data.visible_count ?? 0;
+        fields.zoomValue.textContent = `${Number(camera.zoom || 1).toFixed(2)}x`;
+        fields.fovValue.textContent = Number(state.data.fov || 0).toFixed(3);
+        fields.updated.textContent = state.data.updated_at
+          ? new Date(state.data.updated_at).toLocaleTimeString()
+          : "sync";
+
+        const nodes = [...(state.data.nodes || [])].sort((a, b) => a.distance - b.distance);
+        if (!state.selectedNodeId && nodes.length) {
+          const firstVisible = nodes.find((node) => node.visible) || nodes[0];
+          state.selectedNodeId = firstVisible.id;
+        }
+        renderFocus(nodes);
+
+        fields.nodesList.innerHTML = "";
+        for (const node of nodes.slice(0, 8)) {
+          const row = document.createElement("button");
+          row.type = "button";
+          row.className = "node-row";
+          if (node.id === state.selectedNodeId) row.style.borderColor = "rgba(68, 214, 140, 0.68)";
+          row.innerHTML = `
+            <strong>${escapeHtml(node.title)}</strong>
+            <p>${escapeHtml(node.summary || node.detail_preview || "")}</p>
+            <div class="node-meta">
+              <span class="tag ${tagClass(node.detail_state)}">${escapeHtml(node.detail_state)}</span>
+              <span class="tag">x ${Number(node.x).toFixed(2)}</span>
+              <span class="tag">y ${Number(node.y).toFixed(2)}</span>
+              <span class="tag">z ${Number(node.zoom_threshold).toFixed(1)}</span>
+            </div>
+          `;
+          row.addEventListener("click", () => {
+            state.selectedNodeId = node.id;
+            renderFocus(nodes);
+            moveCamera(node.x, node.y, Math.max(node.zoom_threshold, 4));
+          });
+          fields.nodesList.appendChild(row);
+        }
+      }
+
+      function renderFocus(nodes) {
+        const selected = nodes.find((node) => node.id === state.selectedNodeId);
+        if (!selected) {
+          fields.focusTitle.textContent = "Focus";
+          fields.focusSummary.textContent = "";
+          fields.focusDetail.textContent = "";
+          return;
+        }
+        fields.focusTitle.textContent = selected.title;
+        fields.focusSummary.textContent = `${selected.detail_state} · z ${Number(selected.zoom_threshold).toFixed(1)} · x ${Number(selected.x).toFixed(2)} y ${Number(selected.y).toFixed(2)}`;
+        fields.focusDetail.textContent =
+          selected.detail_state === "unlocked"
+            ? selected.detail_content
+            : selected.summary || selected.detail_preview || "";
+      }
+
+      function tagClass(stateName) {
+        if (stateName === "unlocked") return "unlocked";
+        if (stateName === "locked") return "locked";
+        return "outside";
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      async function moveCamera(x, y, zoom) {
+        const camera = {
+          x: clamp(x, -1, 1),
+          y: clamp(y, -1, 1),
+          zoom: clamp(zoom, 0.2, 80)
+        };
+        useLocalCamera(camera);
+        state.cameraCommitInFlight = true;
+        try {
+          await fetch("/api/camera", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ x: camera.x, y: camera.y, zoom_level: camera.zoom })
+          });
+          const response = await fetch("/api/state", { cache: "no-store" });
+          if (response.ok) {
+            state.data = await response.json();
+            renderPanel();
+          }
+        } finally {
+          state.cameraCommitInFlight = false;
+          state.localCameraDirty = false;
+          state.suspendFetchUntil = Date.now() + 120;
+        }
+      }
+
+      function scheduleCameraCommit() {
+        window.clearTimeout(state.cameraCommitTimer);
+        state.cameraCommitTimer = window.setTimeout(() => {
+          const camera = state.data.camera || { x: 0, y: 0, zoom: 1 };
+          moveCamera(camera.x, camera.y, camera.zoom);
+        }, 120);
+      }
+
+      function zoomAt(clientX, clientY, deltaY) {
+        const camera = state.data.camera || { x: 0, y: 0, zoom: 1 };
+        const before = screenToWorld(clientX, clientY, camera);
+        const factor = Math.exp(-deltaY * 0.0024);
+        const nextZoom = clamp(Number(camera.zoom || 1) * factor, 0.2, 80);
+        const rect = canvas.getBoundingClientRect();
+        const width = canvas.width / state.deviceScale;
+        const height = canvas.height / state.deviceScale;
+        const base = viewBase(width, height);
+        const scale = base * nextZoom;
+        const nextX = before.x - (clientX - rect.left - width / 2) / scale;
+        const nextY = before.y - (clientY - rect.top - height / 2) / scale;
+        state.data.camera = {
+          x: clamp(nextX, -1, 1),
+          y: clamp(nextY, -1, 1),
+          zoom: nextZoom
+        };
+        useLocalCamera(state.data.camera);
+        scheduleCameraCommit();
+      }
+
+      function panByPixels(deltaX, deltaY) {
+        const camera = state.data.camera || { x: 0, y: 0, zoom: 1 };
+        const width = canvas.width / state.deviceScale;
+        const height = canvas.height / state.deviceScale;
+        const base = viewBase(width, height);
+        const scale = base * Math.max(0.1, Number(camera.zoom || 1));
+        const nextCamera = {
+          x: clamp(Number(camera.x || 0) - deltaX / scale, -1, 1),
+          y: clamp(Number(camera.y || 0) - deltaY / scale, -1, 1),
+          zoom: Number(camera.zoom || 1)
+        };
+        useLocalCamera(nextCamera);
+        scheduleCameraCommit();
+      }
+
+      function selectNearestNode(clientX, clientY) {
+        const width = canvas.width / state.deviceScale;
+        const height = canvas.height / state.deviceScale;
+        const rect = canvas.getBoundingClientRect();
+        const nodes = prepareNodesForDrawing(state.data.nodes || [], width, height);
+        let bestNode = null;
+        let bestDistance = Infinity;
+        for (const node of nodes) {
+          const point = worldToScreen(node.x, node.y);
+          const distance = Math.hypot(clientX - rect.left - point.x, clientY - rect.top - point.y);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestNode = node;
+          }
+        }
+        if (bestNode && bestDistance < 42) {
+          state.selectedNodeId = bestNode.id;
+          renderPanel();
+        }
+      }
+
+      async function injectConcept(payload) {
+        const response = await fetch("/api/inject", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await response.text());
+        await fetchState();
+      }
+
+      async function seedDrosteDemo() {
+        const response = await fetch("/api/demo/droste", { method: "POST" });
+        if (!response.ok) throw new Error(await response.text());
+        await fetchState();
+      }
+
+      document.querySelector("#refreshButton").addEventListener("click", fetchState);
+      document.querySelector("#homeButton").addEventListener("click", () => moveCamera(0, 0, 1));
+      document.querySelector("#fitButton").addEventListener("click", () => moveCamera(0, 0, 0.6));
+      document.querySelector("#seedButton").addEventListener("click", seedDrosteDemo);
+      document.querySelector("#deepButton").addEventListener("click", () => moveCamera(0, 0, 16));
+
+      canvas.addEventListener(
+        "wheel",
+        (event) => {
+          event.preventDefault();
+          zoomAt(event.clientX, event.clientY, event.deltaY);
+        },
+        { passive: false }
+      );
+
+      canvas.addEventListener("pointerdown", (event) => {
+        state.drag.active = true;
+        state.drag.moved = false;
+        state.drag.pointerId = event.pointerId;
+        state.drag.lastX = event.clientX;
+        state.drag.lastY = event.clientY;
+        canvas.classList.add("is-dragging");
+        canvas.setPointerCapture(event.pointerId);
+      });
+
+      canvas.addEventListener("pointermove", (event) => {
+        if (!state.drag.active || state.drag.pointerId !== event.pointerId) return;
+        const deltaX = event.clientX - state.drag.lastX;
+        const deltaY = event.clientY - state.drag.lastY;
+        if (Math.abs(deltaX) + Math.abs(deltaY) > 2) state.drag.moved = true;
+        state.drag.lastX = event.clientX;
+        state.drag.lastY = event.clientY;
+        panByPixels(deltaX, deltaY);
+      });
+
+      canvas.addEventListener("pointerup", (event) => {
+        if (state.drag.pointerId === event.pointerId) {
+          canvas.classList.remove("is-dragging");
+          canvas.releasePointerCapture(event.pointerId);
+          if (!state.drag.moved) selectNearestNode(event.clientX, event.clientY);
+          state.drag.active = false;
+          state.drag.pointerId = null;
+        }
+      });
+
+      canvas.addEventListener("dblclick", (event) => {
+        const target = screenToWorld(event.clientX, event.clientY);
+        moveCamera(target.x, target.y, Math.max(16, Number(state.data.camera?.zoom || 1) * 2));
+      });
+
+      document.querySelector("#injectForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        await injectConcept({
+          title: document.querySelector("#titleInput").value,
+          summary: document.querySelector("#summaryInput").value,
+          detail_content: document.querySelector("#detailInput").value,
+          zoom_threshold: Number(document.querySelector("#thresholdInput").value || 20)
+        });
+        event.currentTarget.reset();
+        document.querySelector("#thresholdInput").value = 20;
+      });
+
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+      fetchState();
+      setInterval(fetchState, 1000);
+      requestAnimationFrame(draw);
+    </script>
+  </body>
+</html>

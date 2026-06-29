@@ -1,0 +1,59 @@
+# ── Droste live/private data — NEVER commit (may contain user source) ──
+droste_memory_db.json
+droste_memory_db.json.tmp
+droste_memory_db.corrupt-*.json
+droste_embed_cache.json
+.droste/
+visualizer/graph.json
+visualizer/status.json
+# NOTE: visualizer/demo_graph.json IS committed (public droste-self demo)
+
+# logs / scratch
+*.log
+visualizer.log
+visualizer.err.log
+visualizer/*.boot.*.log
+kernel.errors.txt
+scratch/
+.codex/
+.agents/
+.tmp/
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# envs / editors / vendored mirrors
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+.DS_Store
+.python-packages/
+.plugin-mcp-runtime/
+.plugin-python-packages/
+
+# personal ad-hoc benchmark with private project paths
+eval/multi_project_eval.py
+droste_file_registry.json
+visualizer/context.json
+
+# eval result reports (reference private codebases)
+eval/*.json
+
+# internal ops docs (kept locally in ../droste-private, not public)
+RELEASE.md
+LAUNCH.md
+
+# live/generated viewer data in ANY folder (docs/, visualizer/, ...) — never public
+**/context.json
+**/graph.json
+**/status.json
