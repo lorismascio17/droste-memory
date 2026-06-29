@@ -83,6 +83,7 @@ def print_splash(color: bool | None = None) -> None:
     print("  droste status")
     print("  droste zoom <symbol_name>")
     print("  droste context [query] --budget 1500")
+    print("  droste mcp")
     print()
     print(_paint("Fast path: droste context hub_core --budget 1000 | clip", DIM, enabled))
 
@@ -378,6 +379,13 @@ def command_view(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_mcp(args: argparse.Namespace) -> int:
+    from core.droste_mcp import main as run_mcp
+
+    run_mcp(args.db)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="droste",
@@ -422,6 +430,9 @@ def build_parser() -> argparse.ArgumentParser:
     view.add_argument("--port", type=int, default=7878)
     view.add_argument("--no-open", action="store_true", help="Serve without opening a browser.")
     view.set_defaults(func=command_view)
+
+    mcp = sub.add_parser("mcp", help="Run the stdio MCP server.")
+    mcp.set_defaults(func=command_mcp)
 
     return parser
 

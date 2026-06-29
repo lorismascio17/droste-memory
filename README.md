@@ -146,13 +146,15 @@ search), not a head-to-head against the finished products that wrap them.
 
 ## Use it as an MCP server
 
-Droste is a drop-in MCP server — an agent calls it as primary code memory instead
-of blind file reads.
+Droste is a drop-in MCP server — an AI agent can call it as primary code memory instead of doing blind file reads. Add this to your client configuration file (e.g., Cursor, Claude Desktop, or Codex):
 
-```jsonc
+```json
 {
   "mcpServers": {
-    "droste": { "command": "python", "args": ["/abs/path/to/droste-memory/server.py"] }
+    "droste": {
+      "command": "droste",
+      "args": ["mcp"]
+    }
   }
 }
 ```
