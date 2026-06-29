@@ -24,12 +24,17 @@ edge. [Full flythrough (FastAPI)](docs/assets/demo.mp4)*
 ## Quickstart
 
 ```bash
-python -m pip install --upgrade droste-memory # install the official engine from PyPI
-droste index .                              # index the current repo
-droste view                                # open the fractal galaxy in your browser
+# Windows
+python -m pip install --upgrade droste-memory
+
+# macOS / Linux
+python3 -m pip install --upgrade droste-memory
+
+droste index . # index the current repo
+droste view    # open the fractal galaxy in your browser
 ```
 
-Three commands. `droste view` opens a full-screen, 60fps zoomable map of your
+Install once, then index and view. `droste view` opens a full-screen, 60fps zoomable map of your
 code — scroll to dive from the project star into folder orbits, down to the
 individual functions, with the causal edges glowing between them.
 
@@ -152,7 +157,12 @@ Droste is a drop-in MCP server — an AI agent can call it as primary code memor
 First install or upgrade the PyPI package:
 
 ```bash
+# Windows
 python -m pip install --upgrade droste-memory
+
+# macOS / Linux
+python3 -m pip install --upgrade droste-memory
+
 droste mcp --help
 ```
 
