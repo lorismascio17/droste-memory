@@ -1,4 +1,4 @@
 include README.md LICENSE CONTRIBUTING.md requirements.txt
-recursive-include visualizer *.html *.py *.json
-prune visualizer/graph.json
-prune visualizer/status.json
+recursive-include visualizer *.html *.py
+include visualizer/demo_graph.json
+global-exclude graph.json status.json context.json
