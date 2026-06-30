@@ -253,6 +253,19 @@ cross-process shard race). `eval/` = performance/quality benchmarks.
 visualizer and MCP server are working and tested. Packaging/distribution are
 maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
 
+### What's new in v1.1.0
+
+- MCP context is root-isolated: `droste_index_project` records the active repo,
+  and `droste_get_context` / `droste_status` filter to that root unless an agent
+  passes another `root` explicitly.
+- Multi-root databases no longer silently mix repositories when no safe root can
+  be inferred; Droste returns a clean warning instead.
+- Windows CLI output is guarded for UTF-8 consoles to avoid `UnicodeEncodeError`
+  crashes on older terminal encodings.
+- Retrieval ranking is now query-aware: runtime code gets a slight boost for
+  normal implementation queries, while tests/docs remain fully visible when the
+  query asks for them.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
