@@ -25,6 +25,48 @@ def _shard_stats(db_path: Path) -> dict[str, Any]:
     }
 
 
+def _node_in_root(engine: DrosteConceptEngine, node: Any, root: str | Path | None) -> bool:
+    scope = engine.normalize_root(root)
+    if scope is None:
+        return True
+    return engine.normalize_root(node.index_root) == scope
+
+
+def droste_status_payload(
+    engine: DrosteConceptEngine,
+    root: str | Path | None = None,
+) -> dict[str, Any]:
+    migration = engine.ensure_sharded_storage()
+    scope_root, root_warning = engine.resolve_query_root(root)
+    nodes = [
+        node for node in engine.all_nodes()
+        if not (root_warning and scope_root is None)
+        and _node_in_root(engine, node, scope_root)
+    ]
+    node_ids = {node.id for node in nodes}
+    links = [
+        link for link in engine.all_links()
+        if link.from_node in node_ids and link.to_node in node_ids
+    ]
+    shard_stats = _shard_stats(engine.db_path)
+    return {
+        "storage": "Sharded" if migration.get("storage") == "sharded" else migration.get("storage"),
+        "database": str(engine.db_path),
+        "root": scope_root,
+        "active_root": engine.active_root(),
+        "indexed_roots": engine.indexed_roots(),
+        "warnings": [root_warning] if root_warning else [],
+        "node_count": len(nodes),
+        "symbol_count": sum(1 for node in nodes if node.node_type == "symbol"),
+        "link_count": len(links),
+        "syntax_link_count": sum(1 for link in links if link.type == "syntax_dependency"),
+        "shard_dir": shard_stats["path"],
+        "shard_count": shard_stats["count"],
+        "shard_bytes": shard_stats["bytes"],
+        "migration": migration,
+    }
+
+
 def create_mcp_server(db_path: str | Path | None = None) -> Any:
     """Create the FastMCP server.
 
@@ -51,43 +93,31 @@ def create_mcp_server(db_path: str | Path | None = None) -> Any:
     ) -> dict[str, Any]:
         """Index a project into Droste's local causal graph."""
 
-        return index_project(
+        result = index_project(
             path,
             engine=engine,
             reset=reset,
             max_files=max_files,
             max_symbols=max_symbols,
         )
+        result["active_root"] = engine.active_root()
+        return result
 
     @mcp.tool()
     def droste_get_context(
         query: str = "project",
         budget: int = DEFAULT_CONTEXT_BUDGET,
+        root: str | None = None,
     ) -> dict[str, Any]:
         """Return a budgeted causal context slice for an AI agent."""
 
-        return get_context(query, engine=engine, budget=budget)
+        return get_context(query, engine=engine, budget=budget, root=root)
 
     @mcp.tool()
-    def droste_status() -> dict[str, Any]:
+    def droste_status(root: str | None = None) -> dict[str, Any]:
         """Return concise local graph and shard health."""
 
-        migration = engine.ensure_sharded_storage()
-        nodes = engine.all_nodes()
-        links = engine.all_links()
-        shard_stats = _shard_stats(engine.db_path)
-        return {
-            "storage": "Sharded" if migration.get("storage") == "sharded" else migration.get("storage"),
-            "database": str(engine.db_path),
-            "node_count": len(nodes),
-            "symbol_count": sum(1 for node in nodes if node.node_type == "symbol"),
-            "link_count": len(links),
-            "syntax_link_count": sum(1 for link in links if link.type == "syntax_dependency"),
-            "shard_dir": shard_stats["path"],
-            "shard_count": shard_stats["count"],
-            "shard_bytes": shard_stats["bytes"],
-            "migration": migration,
-        }
+        return droste_status_payload(engine, root=root)
 
     @mcp.tool()
     def inject_concept(

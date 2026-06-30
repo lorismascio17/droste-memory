@@ -16,7 +16,11 @@ from pathlib import Path
 
 import pytest
 
+from core.droste_cli import _configure_windows_utf8_output
 from core.droste_engine import DrosteConceptEngine, DrosteNode
+from core.droste_ingester import DrosteProjectIngester
+from core.droste_mcp import droste_status_payload
+from conftest import force_hash_backend
 
 
 ROOT = "/virtual/root"
@@ -195,3 +199,121 @@ def test_packer_demotes_detail_as_budget_shrinks(ingester, sample_project):
     )
     assert demoted, f"no demotion: wide={wide_levels} tight={tight_levels}"
     assert tight["used"] <= max(500, 600) or tight["selected_count"] >= 1
+
+
+# ---------------------------------------------------------------------------
+# 4) MCP ROOT ISOLATION  (active_root prevents multi-repo contamination)
+# ---------------------------------------------------------------------------
+def _rooted_node(root: Path, node_id: str, label: str, subpath: str = "src/shared.py") -> DrosteNode:
+    return _mk_node(
+        0,
+        id=node_id,
+        title="shared_entry",
+        summary=f"{label} repository symbol",
+        detail_content=f"def shared_entry():\n    return '{label}'",
+        source_path=str(root / subpath),
+        line_start=1,
+        line_end=2,
+    )
+
+
+def test_active_root_persists_and_context_filters_to_last_indexed_root(tmp_path: Path, engine):
+    root_a = tmp_path / "repo_a"
+    root_b = tmp_path / "repo_b"
+    engine.replace_indexed_nodes([_rooted_node(root_a, "a-node", "alpha")], root_a, reset=True)
+    engine.replace_indexed_nodes([_rooted_node(root_b, "b-node", "bravo")], root_b, reset=False)
+
+    assert engine.active_root() == engine.normalize_root(root_b)
+
+    reloaded = DrosteConceptEngine(db_path=engine.db_path)
+    force_hash_backend(reloaded)
+    assert reloaded.active_root() == engine.normalize_root(root_b)
+
+    ingester = DrosteProjectIngester(reloaded)
+    default_context = ingester.get_context("shared_entry", budget=1200)
+    explicit_context = ingester.get_context("shared_entry", budget=1200, root=root_a)
+
+    assert default_context["root"] == engine.normalize_root(root_b)
+    assert default_context["selected_nodes"][0]["node"]["id"] == "b-node"
+    assert "bravo" in default_context["compiled_context"]
+    assert "alpha" not in default_context["compiled_context"]
+
+    assert explicit_context["root"] == engine.normalize_root(root_a)
+    assert explicit_context["selected_nodes"][0]["node"]["id"] == "a-node"
+    assert "alpha" in explicit_context["compiled_context"]
+    assert "bravo" not in explicit_context["compiled_context"]
+
+
+def test_multi_root_without_active_root_warns_instead_of_mixing_context(tmp_path: Path, engine):
+    root_a = tmp_path / "repo_a"
+    root_b = tmp_path / "repo_b"
+    engine.replace_indexed_nodes([_rooted_node(root_a, "a-node", "alpha")], root_a, reset=True)
+    engine.replace_indexed_nodes([_rooted_node(root_b, "b-node", "bravo")], root_b, reset=False)
+    engine.set_active_root(None)
+
+    ingester = DrosteProjectIngester(engine)
+    context = ingester.get_context("shared_entry", budget=1200)
+    status = droste_status_payload(engine)
+
+    assert context["selected_count"] == 0
+    assert context["warnings"]
+    assert "multiple indexed roots" in context["compiled_context"]
+    assert "alpha" not in context["compiled_context"]
+    assert "bravo" not in context["compiled_context"]
+
+    assert status["node_count"] == 0
+    assert status["warnings"]
+
+
+# ---------------------------------------------------------------------------
+# 5) QUERY-AWARE RANKING  (runtime first unless the query asks for tests/docs)
+# ---------------------------------------------------------------------------
+def test_query_aware_ranking_prefers_runtime_until_query_mentions_tests(tmp_path: Path, engine):
+    root = tmp_path / "ranked"
+    runtime = _rooted_node(root, "runtime-node", "runtime", subpath="src/payment.py")
+    test = _rooted_node(root, "test-node", "test", subpath="tests/payment_test.py")
+    runtime.title = "payment_service"
+    test.title = "payment_service"
+    engine.replace_indexed_nodes([runtime, test], root, reset=True)
+
+    ingester = DrosteProjectIngester(engine)
+    normal = ingester.search_nodes("payment service", limit=2, semantic=False, root=root)
+    test_query = ingester.search_nodes("payment service test", limit=2, semantic=False, root=root)
+
+    assert [match["node"].id for match in normal] == ["runtime-node", "test-node"]
+    assert normal[0]["source_rank"] > 0
+    assert normal[1]["source_rank"] < 0
+
+    assert {match["source_rank"] for match in test_query} == {0.0}
+    normal_gap = normal[0]["blended"] - normal[1]["blended"]
+    test_query_gap = abs(test_query[0]["blended"] - test_query[1]["blended"])
+    assert test_query_gap < normal_gap
+
+
+# ---------------------------------------------------------------------------
+# 6) WINDOWS UTF-8 SAFETY  (cp1252 consoles must not crash the CLI)
+# ---------------------------------------------------------------------------
+def test_windows_utf8_output_guard_reconfigures_and_swallows_failures():
+    class FakeStream:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, str]] = []
+
+        def reconfigure(self, **kwargs) -> None:
+            self.calls.append(kwargs)
+
+    stdout = FakeStream()
+    stderr = FakeStream()
+    _configure_windows_utf8_output("win32", stdout, stderr)
+
+    assert stdout.calls == [{"encoding": "utf-8", "errors": "replace"}]
+    assert stderr.calls == [{"encoding": "utf-8", "errors": "replace"}]
+
+    class BrokenStream:
+        def reconfigure(self, **kwargs) -> None:
+            raise OSError("cp1252 console refused reconfigure")
+
+    _configure_windows_utf8_output("win32", BrokenStream(), BrokenStream())
+
+    non_windows = FakeStream()
+    _configure_windows_utf8_output("linux", non_windows, non_windows)
+    assert non_windows.calls == []

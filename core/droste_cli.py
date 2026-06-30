@@ -13,6 +13,23 @@ from typing import Any
 from urllib import error, request
 
 
+def _configure_windows_utf8_output(
+    platform: str = sys.platform,
+    stdout: Any = sys.stdout,
+    stderr: Any = sys.stderr,
+) -> None:
+    if platform.startswith("win"):
+        if hasattr(stdout, "reconfigure"):
+            try:
+                stdout.reconfigure(encoding="utf-8", errors="replace")
+                stderr.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
+
+_configure_windows_utf8_output()
+
+
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -24,7 +41,7 @@ from core.droste_engine import DEFAULT_DB_PATH, DrosteConceptEngine
 from core.droste_ingester import DrosteProjectIngester, droste_zoom_query
 
 
-VERSION = "v1.0-Alpha-Sharded"
+VERSION = "v1.1.0-Alpha-Sharded"
 VISUALIZER_CAMERA_URL = "http://127.0.0.1:5000/api/camera"
 
 RESET = "\033[0m"
@@ -248,7 +265,7 @@ def command_zoom(args: argparse.Namespace) -> int:
 def command_context(args: argparse.Namespace) -> int:
     engine = _engine(args.db)
     ingester = DrosteProjectIngester(engine)
-    result = ingester.get_context(args.query, budget=args.budget)
+    result = ingester.get_context(args.query, budget=args.budget, root=args.root)
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0
@@ -422,6 +439,7 @@ def build_parser() -> argparse.ArgumentParser:
     context = sub.add_parser("context", help="Emit compressed LLM context.")
     context.add_argument("query", nargs="?", default="project")
     context.add_argument("--budget", type=int, default=1500)
+    context.add_argument("--root", default=None, help="Limit retrieval to one indexed root.")
     context.add_argument("--json", action="store_true", help="Emit full context payload JSON.")
     context.set_defaults(func=command_context)
 

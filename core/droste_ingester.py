@@ -306,6 +306,12 @@ _DETAIL_HINTS = (
     "implementazione", "implementation", "body", "corpo", "riga", "line",
     "esattamente", "exact", "bug", "perche", "perché", "why", "definizione completa",
 )
+_TEST_DOC_QUERY_HINTS = {
+    "test", "tests", "spec", "readme", "doc", "docs",
+    "pytest", "vitest", "jest",
+}
+_RUNTIME_PATH_MARKERS = ("/src/", "/lib/", "/app/", "/api/", "/core/")
+_TEST_DOC_PATH_MARKERS = ("/test/", "/tests/", "/spec/", "/docs/", "/doc/")
 
 
 @dataclass(frozen=True)
@@ -681,14 +687,40 @@ class DrosteProjectIngester:
             ],
         }
 
-    def get_context(self, query: str, budget: int = DEFAULT_CONTEXT_BUDGET) -> dict[str, Any]:
+    def get_context(
+        self,
+        query: str,
+        budget: int = DEFAULT_CONTEXT_BUDGET,
+        root: str | Path | None = None,
+    ) -> dict[str, Any]:
         clean_budget = max(500, int(budget or DEFAULT_CONTEXT_BUDGET))
+        scope_root, root_warning = self.engine.resolve_query_root(root)
+        warnings = [root_warning] if root_warning else []
+        if root_warning and scope_root is None:
+            return {
+                "query": query,
+                "budget": clean_budget,
+                "used": 0,
+                "selected_count": 0,
+                "selected_nodes": [],
+                "compiled_context": f"WARNING: {root_warning}",
+                "root": None,
+                "active_root": self.engine.active_root(),
+                "indexed_roots": self.engine.indexed_roots(),
+                "warnings": warnings,
+            }
+
         # v0.6.0+hybrid: semantic seed re-rank (graph causal ordering untouched).
-        matches = self.search_nodes(query, limit=24, semantic=True)
-        all_nodes = {node.id: node for node in self.engine.all_nodes()}
+        matches = self.search_nodes(query, limit=24, semantic=True, root=scope_root)
+        all_nodes = {
+            node.id: node for node in self.engine.all_nodes()
+            if self._node_in_root(node, scope_root)
+        }
         links_by_source: dict[str, list[dict[str, Any]]] = {}
         links_by_target: dict[str, list[dict[str, Any]]] = {}
         for link in self.engine.all_links():
+            if link.from_node not in all_nodes or link.to_node not in all_nodes:
+                continue
             payload = link.to_dict()
             links_by_source.setdefault(link.from_node, []).append(payload)
             links_by_target.setdefault(link.to_node, []).append(payload)
@@ -818,6 +850,10 @@ class DrosteProjectIngester:
             "selected_count": len(selected),
             "selected_nodes": selected,
             "compiled_context": "\n\n".join(sections),
+            "root": scope_root,
+            "active_root": self.engine.active_root(),
+            "indexed_roots": self.engine.indexed_roots(),
+            "warnings": warnings,
         }
 
     def _derive_zoom(self, query: str, budget: int) -> float:
@@ -842,6 +878,7 @@ class DrosteProjectIngester:
         limit: int = 12,
         semantic: bool = False,
         alpha: float = 5.0,
+        root: str | Path | None = None,
     ) -> list[dict[str, Any]]:
         """Rank nodes for a query.
 
@@ -874,7 +911,10 @@ class DrosteProjectIngester:
         # exact-name lexical hits keep rank 1 (nscore 1.0 + their own high sem).
         scored: list[tuple[int, float, DrosteNode]] = []
         max_score = 0
+        scope_root = self.engine.normalize_root(root)
         for node in self.engine.all_nodes():
+            if not self._node_in_root(node, scope_root):
+                continue
             score = self._score_node(node, terms, query)
             sem = 0.0
             if query_embedding and node.embedding:
@@ -888,10 +928,12 @@ class DrosteProjectIngester:
         matches: list[dict[str, Any]] = []
         for score, sem, node in scored:
             nscore = (score / max_score) if max_score else 0.0
-            blended = nscore + (alpha * sem if sem > 0 else 0.0)
+            source_rank = self._source_rank_adjustment(node, query)
+            blended = max(0.0, nscore + (alpha * sem if sem > 0 else 0.0) + source_rank)
             matches.append({
                 "score": score,
                 "semantic": round(sem, 4),
+                "source_rank": round(source_rank, 4),
                 "blended": round(blended, 4),
                 "node": node,
             })
@@ -2290,6 +2332,29 @@ class DrosteProjectIngester:
             score += 2
         return score
 
+    def _source_rank_adjustment(self, node: DrosteNode, query: str) -> float:
+        query_terms = set(self._terms(query))
+        if query_terms & _TEST_DOC_QUERY_HINTS:
+            return 0.0
+
+        path = "/" + (node.source_path or "").replace("\\", "/").lower().lstrip("/")
+        adjustment = 0.0
+        if any(marker in path for marker in _RUNTIME_PATH_MARKERS):
+            adjustment += 0.08
+        if (
+            any(marker in path for marker in _TEST_DOC_PATH_MARKERS)
+            or path.endswith("/readme.md")
+            or path.endswith("/readme.mdx")
+        ):
+            adjustment -= 0.10
+        return adjustment
+
+    def _node_in_root(self, node: DrosteNode, root: str | Path | None) -> bool:
+        scope = self.engine.normalize_root(root)
+        if scope is None:
+            return True
+        return self.engine.normalize_root(node.index_root) == scope
+
     @staticmethod
     def _terms(text: str) -> list[str]:
         return [
@@ -2738,5 +2803,6 @@ def get_context(
     *,
     engine: DrosteConceptEngine | None = None,
     budget: int = DEFAULT_CONTEXT_BUDGET,
+    root: str | Path | None = None,
 ) -> dict[str, Any]:
-    return DrosteProjectIngester(engine).get_context(query, budget=budget)
+    return DrosteProjectIngester(engine).get_context(query, budget=budget, root=root)

@@ -380,6 +380,7 @@ class DrosteConceptEngine:
             all_nodes = [*existing_nodes, *nodes]
             node_dicts = [node.to_dict() for node in all_nodes]
             self._data["nodes"] = node_dicts
+            self._data["active_root"] = clean_root
             # Prime the parsed-node cache directly with the live objects we already
             # hold, so the get_space_status() below (and the next reads) need not
             # rebuild all nodes from their dicts via from_dict. The cache key is the
@@ -477,6 +478,69 @@ class DrosteConceptEngine:
             self._maybe_reload()
             return self._links()
 
+    @staticmethod
+    def normalize_root(root: str | Path | None) -> str | None:
+        if root is None:
+            return None
+        clean = str(root).strip()
+        if not clean:
+            return None
+        return str(Path(clean).expanduser().resolve())
+
+    def set_active_root(self, root: str | Path | None) -> dict[str, Any]:
+        with self._lock:
+            self._maybe_reload()
+            self._data["active_root"] = self.normalize_root(root)
+            self._touch_and_save()
+            return {
+                "active_root": self._data.get("active_root"),
+                "indexed_roots": self.indexed_roots(),
+            }
+
+    def active_root(self) -> str | None:
+        with self._lock:
+            self._maybe_reload()
+            return self._data.get("active_root")
+
+    def indexed_roots(self) -> list[str]:
+        with self._lock:
+            self._maybe_reload()
+            roots = {
+                self.normalize_root(node.index_root)
+                for node in self._nodes()
+                if node.index_root
+            }
+            return sorted(root for root in roots if root)
+
+    def resolve_query_root(self, root: str | Path | None = None) -> tuple[str | None, str | None]:
+        """Resolve the repo scope for agent-facing reads without mixing roots."""
+
+        with self._lock:
+            self._maybe_reload()
+            roots = self.indexed_roots()
+            explicit = self.normalize_root(root)
+            if explicit:
+                if roots and explicit not in roots:
+                    return explicit, f"requested root is not indexed: {explicit}"
+                return explicit, None
+
+            active = self.normalize_root(self._data.get("active_root"))
+            if active and (not roots or active in roots):
+                return active, None
+            if active and roots:
+                return None, (
+                    f"active_root is no longer indexed: {active}; "
+                    "pass root explicitly or re-index the project"
+                )
+            if len(roots) == 1:
+                return roots[0], None
+            if len(roots) > 1:
+                return None, (
+                    "multiple indexed roots exist and no active_root is set; "
+                    "pass root explicitly or run droste_index_project first"
+                )
+            return None, None
+
     def get_space_status(self) -> dict[str, Any]:
         with self._lock:
             self._maybe_reload()
@@ -493,6 +557,8 @@ class DrosteConceptEngine:
                 "links": links,
                 "updated_at": self._data.get("updated_at"),
                 "database": str(self.db_path),
+                "active_root": self._data.get("active_root"),
+                "indexed_roots": self.indexed_roots(),
             }
 
     def ensure_sharded_storage(self) -> dict[str, Any]:
@@ -620,6 +686,7 @@ class DrosteConceptEngine:
         meta.setdefault("camera", {"x": 0.0, "y": 0.0, "zoom": 1.0})
         meta.setdefault("links", [])
         meta.setdefault("updated_at", utc_now())
+        meta.setdefault("active_root", None)
 
         # Reassemble the full node list in RAM. The sharded format keeps only
         # source_path-less "loose" nodes (injected concepts) inline; every indexed
@@ -797,6 +864,7 @@ class DrosteConceptEngine:
             "camera": {"x": 0.0, "y": 0.0, "zoom": 1.0},
             "nodes": [],
             "links": [],
+            "active_root": None,
             "updated_at": utc_now(),
         }
 

@@ -68,7 +68,7 @@ Running `droste` with no arguments prints the command palette:
                   '-----------------------'
 
 DROSTE-MEMORY // RIGID FRACTAL RADIAL LAYOUT
-Local Graph Engine v1.0-Alpha-Sharded
+Local Graph Engine v1.1.0-Alpha-Sharded
 
 Commands
   droste index <path> [--reset]
@@ -249,7 +249,7 @@ cross-process shard race). `eval/` = performance/quality benchmarks.
 
 ## Status
 
-**v1.0.1 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
+**v1.1.0 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
 visualizer and MCP server are working and tested. Packaging/distribution are
 maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
 
