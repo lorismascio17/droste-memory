@@ -175,6 +175,29 @@ args = ["mcp"]
 startup_timeout_sec = 120
 ```
 
+By default, `droste mcp` uses Droste's global local database. That is fine for
+quick use and small workflows. For serious multi-repo work, use one database per
+repository so each project has isolated memory and agents can safely re-index
+that project with `reset=true`.
+
+The `--db` option is global, so keep it before `mcp`:
+
+```toml
+# Windows example
+[mcp_servers.droste]
+command = "droste"
+args = ["--db", "C:/Users/you/AppData/Local/Droste/my-project/droste_memory_db.json", "mcp"]
+startup_timeout_sec = 120
+```
+
+```toml
+# macOS / Linux example
+[mcp_servers.droste]
+command = "droste"
+args = ["--db", "/Users/you/.local/share/droste/my-project/droste_memory_db.json", "mcp"]
+startup_timeout_sec = 120
+```
+
 For JSON-based MCP clients:
 
 ```json
@@ -183,6 +206,23 @@ For JSON-based MCP clients:
     "droste": {
       "command": "droste",
       "args": ["mcp"]
+    }
+  }
+}
+```
+
+The same isolated-DB pattern works in JSON clients:
+
+```json
+{
+  "mcpServers": {
+    "droste": {
+      "command": "droste",
+      "args": [
+        "--db",
+        "/absolute/path/to/droste_memory_db.json",
+        "mcp"
+      ]
     }
   }
 }
