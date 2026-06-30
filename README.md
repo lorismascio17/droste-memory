@@ -68,7 +68,7 @@ Running `droste` with no arguments prints the command palette:
                   '-----------------------'
 
 DROSTE-MEMORY // RIGID FRACTAL RADIAL LAYOUT
-Local Graph Engine v1.1.0-Alpha-Sharded
+Local Graph Engine v1.1.1-Alpha-Sharded
 
 Commands
   droste index <path> [--reset]
@@ -249,9 +249,15 @@ cross-process shard race). `eval/` = performance/quality benchmarks.
 
 ## Status
 
-**v1.1.0 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
+**v1.1.1 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
 visualizer and MCP server are working and tested. Packaging/distribution are
 maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
+
+### What's new in v1.1.1
+
+- Packaging/privacy hardening: generated visualizer JSON files (`graph.json`,
+  `status.json`, `context.json`) are excluded from source distributions, while
+  the public `visualizer/demo_graph.json` remains included.
 
 ### What's new in v1.1.0
 

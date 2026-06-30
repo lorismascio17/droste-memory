@@ -1,6 +1,6 @@
 [project]
 name = "droste-memory"
-version = "1.1.0"
+version = "1.1.1"
 readme = "README.md"
 description = "Local hybrid structural and semantic graph memory engine."
 requires-python = ">=3.10"
