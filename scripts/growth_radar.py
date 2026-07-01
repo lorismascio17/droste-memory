@@ -48,6 +48,13 @@ def dist_artifacts(version: str) -> list[str]:
     return sorted(path.name for path in dist.glob(f"droste_memory-{version}*"))
 
 
+def expected_dist_artifacts(version: str) -> set[str]:
+    return {
+        f"droste_memory-{version}-py3-none-any.whl",
+        f"droste_memory-{version}.tar.gz",
+    }
+
+
 def fetch_json(url: str) -> dict:
     request = urllib.request.Request(url, headers={"User-Agent": "droste-growth-radar"})
     with urllib.request.urlopen(request, timeout=20) as response:
@@ -100,7 +107,18 @@ def main() -> None:
     if local_version != server_version:
         print("- Fix local version mismatch between pyproject.toml and server.json.")
     elif pypi_version != local_version:
-        print(f"- Upload PyPI {local_version}: python -m twine upload dist/*")
+        missing = sorted(expected_dist_artifacts(local_version) - set(artifacts))
+        if missing:
+            print(
+                f"- Build PyPI {local_version} artifacts first: "
+                "python -m build --no-isolation"
+            )
+            print(f"  Missing: {', '.join(missing)}")
+        else:
+            print(
+                f"- Upload PyPI {local_version}: "
+                f"python -m twine upload dist/droste_memory-{local_version}*"
+            )
     elif registry_visible is False:
         print("- Run GitHub Actions workflow: Publish MCP Registry.")
     elif registry_visible is True:
