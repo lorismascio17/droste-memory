@@ -2,6 +2,17 @@
 
 All notable public release notes for Droste are tracked here.
 
+## v1.1.2 - MCP Registry Launch Prep
+
+- Added the PyPI README ownership marker required by the official MCP Registry:
+  `io.github.lorismascio17/droste-memory`.
+- Added `server.json` so Droste can be published as a discoverable MCP server.
+- Added a manual GitHub Actions workflow to publish `server.json` to the MCP
+  Registry after the matching PyPI release is live.
+- Added a scheduled growth radar workflow to keep public discovery state
+  visible in GitHub Actions.
+- Added a growth engine document with directory, registry and outreach targets.
+
 ## v1.1.1 - Packaging and Discovery Hardening
 
 - Hardened package manifests so generated visualizer data (`graph.json`,
@@ -31,4 +42,3 @@ All notable public release notes for Droste are tracked here.
 - Added the global CLI entry point: `droste`.
 - Added the MCP server command: `droste mcp`.
 - Documented Codex, Cursor, and Claude-style MCP configuration examples.
-

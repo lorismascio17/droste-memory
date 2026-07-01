@@ -1,4 +1,4 @@
-include README.md CHANGELOG.md LICENSE CONTRIBUTING.md requirements.txt
+include README.md CHANGELOG.md LICENSE CONTRIBUTING.md requirements.txt server.json
 recursive-include visualizer *.html *.py
 include visualizer/demo_graph.json
 global-exclude graph.json status.json context.json

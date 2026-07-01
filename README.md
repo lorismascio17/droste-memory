@@ -2,6 +2,8 @@
 
 # Droste
 
+<!-- mcp-name: io.github.lorismascio17/droste-memory -->
+
 ### See your codebase as a living galaxy — and give your agents causal memory of it.
 
 Droste indexes any repo into a fractal, zoomable map of its symbols, wires them
@@ -73,7 +75,7 @@ Running `droste` with no arguments prints the command palette:
                   '-----------------------'
 
 DROSTE-MEMORY // RIGID FRACTAL RADIAL LAYOUT
-Local Graph Engine v1.1.1-Alpha-Sharded
+Local Graph Engine v1.1.2-Alpha-Sharded
 
 Commands
   droste index <path> [--reset]
@@ -254,9 +256,16 @@ cross-process shard race). `eval/` = performance/quality benchmarks.
 
 ## Status
 
-**v1.1.1 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
+**v1.1.2 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
 visualizer and MCP server are working and tested. Packaging/distribution are
 maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
+
+### What's new in v1.1.2
+
+- Added MCP Registry ownership metadata in the README/PyPI description.
+- Added `server.json` for official MCP Registry publishing.
+- Added manual and scheduled growth workflows for MCP registry publishing and
+  visibility checks.
 
 ### What's new in v1.1.1
 

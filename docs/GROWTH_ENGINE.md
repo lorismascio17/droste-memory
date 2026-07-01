@@ -1,0 +1,114 @@
+# Droste Growth Engine
+
+This is the operating plan for making Droste discoverable without spam.
+
+The goal is not to auto-post across social networks. The goal is to make Droste
+present wherever developers and MCP clients search for code-memory tools.
+
+## Prime Directive
+
+- Automate verification, packaging and registry publishing.
+- Prepare high-quality submissions and outreach copy.
+- Do not automate unsolicited posts, votes, comments, DMs or cross-posting.
+- Do not ask for stars. Ask for technical feedback.
+
+## Primary Distribution Channels
+
+| Priority | Channel | Why it matters | Action |
+| --- | --- | --- | --- |
+| P0 | Official MCP Registry | Discovery by MCP clients and directories | Publish `server.json` with `mcp-publisher` |
+| P0 | GitHub topic search | Permanent organic discovery | Keep topics, README and badges sharp |
+| P0 | PyPI | Install and metadata discovery | Keep package metadata current |
+| P1 | Glama MCP directory | Large MCP server directory | Submit or claim after MCP Registry publish |
+| P1 | awesome-mcp-servers | High-signal GitHub list | Open a focused PR |
+| P1 | Dev.to technical article | Searchable explanation | Keep article linked from launch posts |
+| P2 | Reddit/HN | Feedback once account trust exists | Participate first, then post |
+| P2 | Direct outreach | High-quality maintainer feedback | 10 targeted messages, no mass DMs |
+
+## Official MCP Registry Path
+
+Droste now has:
+
+- `server.json`
+- PyPI package: `droste-memory`
+- README marker: `mcp-name: io.github.lorismascio17/droste-memory`
+- workflow: `.github/workflows/publish-mcp-registry.yml`
+
+Publish order:
+
+1. Release the matching version to PyPI.
+2. Run the `Publish MCP Registry` workflow manually from GitHub Actions.
+3. Verify discovery:
+
+```bash
+python scripts/growth_radar.py
+```
+
+## GitHub Release Copy
+
+Title:
+
+```text
+Droste v1.1.2 - MCP Registry launch prep
+```
+
+Body:
+
+```text
+Droste v1.1.2 prepares the project for official MCP Registry publishing.
+
+Highlights:
+- Added MCP Registry ownership marker to the README/PyPI description.
+- Added server.json for MCP server discovery.
+- Added a manual GitHub Actions workflow to publish Droste to the MCP Registry.
+- Added a scheduled growth radar workflow to keep public discovery state visible.
+
+Install:
+python -m pip install --upgrade droste-memory
+
+MCP:
+droste mcp
+
+Server name:
+io.github.lorismascio17/droste-memory
+```
+
+## Awesome List PR Entry
+
+Suggested entry:
+
+```markdown
+- [Droste](https://github.com/lorismascio17/droste-memory) - Local MCP code-memory engine for AI coding agents. Builds a structural + semantic graph of a repository, then returns causal context through CLI and MCP.
+```
+
+PR body:
+
+```text
+Adds Droste, an open-source local MCP code-memory engine for AI coding agents.
+
+It indexes a repository into a structural + semantic graph and exposes context retrieval through MCP, with sharded local storage and project-root isolation.
+```
+
+## Direct Outreach Copy
+
+```text
+Hi, I built Droste, a local MCP code-memory engine for AI coding agents.
+
+It combines structural code graph retrieval with semantic search, so agents can retrieve caller/callee and cross-language context instead of only vector-similar chunks.
+
+I am not asking for promotion; I would value technical feedback from someone working in MCP, code intelligence or agent tooling.
+
+GitHub:
+https://github.com/lorismascio17/droste-memory
+```
+
+## Weekly Radar
+
+The `Growth Radar` GitHub Action runs every Monday and can also be triggered
+manually. It checks:
+
+- GitHub stars/topics/latest push;
+- PyPI latest version;
+- MCP Registry visibility.
+
+It intentionally does not post anywhere.
