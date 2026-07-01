@@ -38,8 +38,12 @@ Droste now has:
 Publish order:
 
 1. Release the matching version to PyPI.
-2. Run the `Publish MCP Registry` workflow manually from GitHub Actions.
-3. Verify discovery:
+2. Run the `Publish MCP Registry` workflow manually from GitHub Actions, or let
+   its daily schedule catch the release after PyPI is live.
+3. The workflow first runs `scripts/check_release_alignment.py`, so it skips
+   cleanly until `pyproject.toml`, `server.json` and the public PyPI release all
+   point to the same version.
+4. Verify discovery:
 
 ```bash
 python scripts/growth_radar.py

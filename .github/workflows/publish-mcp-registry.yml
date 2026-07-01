@@ -2,6 +2,8 @@ name: Publish MCP Registry
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "30 8 * * *"
 
 jobs:
   publish:
@@ -14,15 +16,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Check PyPI/server release alignment
+        id: release_alignment
+        run: python scripts/check_release_alignment.py --github-output
+
+      - name: Skip publish when release is not aligned
+        if: steps.release_alignment.outputs.aligned != 'true'
+        run: echo "PyPI, pyproject.toml and server.json are not aligned yet. Skipping MCP Registry publish."
+
       - name: Install mcp-publisher
+        if: steps.release_alignment.outputs.aligned == 'true'
         run: |
           curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
 
       - name: Validate server.json
+        if: steps.release_alignment.outputs.aligned == 'true'
         run: ./mcp-publisher validate
 
       - name: Authenticate to MCP Registry
+        if: steps.release_alignment.outputs.aligned == 'true'
         run: ./mcp-publisher login github-oidc
 
       - name: Publish to MCP Registry
+        if: steps.release_alignment.outputs.aligned == 'true'
         run: ./mcp-publisher publish
