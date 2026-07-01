@@ -10,6 +10,11 @@ agent the *causal* slice of code it actually needs — not just keyword matches.
 
 **Local-first · zero-config · polyglot · MCP-native**
 
+[![PyPI](https://img.shields.io/pypi/v/droste-memory.svg)](https://pypi.org/project/droste-memory/)
+[![Python](https://img.shields.io/pypi/pyversions/droste-memory.svg)](https://pypi.org/project/droste-memory/)
+[![CI](https://github.com/lorismascio17/droste-memory/actions/workflows/ci.yml/badge.svg)](https://github.com/lorismascio17/droste-memory/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/lorismascio17/droste-memory.svg)](LICENSE)
+
 ![Droste fractal code galaxy](docs/assets/hero.gif)
 
 *Zooming out reveals the causal web — every cyan arc is a real `syntax_dependency`

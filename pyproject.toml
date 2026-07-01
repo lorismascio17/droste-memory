@@ -3,6 +3,33 @@ name = "droste-memory"
 version = "1.1.1"
 readme = "README.md"
 description = "Local hybrid structural and semantic graph memory engine."
+license = "MIT"
+keywords = [
+    "ai-agents",
+    "code-intelligence",
+    "code-search",
+    "developer-tools",
+    "local-first",
+    "mcp",
+    "rag",
+    "semantic-search",
+    "tree-sitter",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance",
+    "Typing :: Typed",
+]
 requires-python = ">=3.10"
 # Core runtime. fastembed (ONNX, no torch) is the default semantic backend and
 # tree-sitter-language-pack powers the polyglot call-graph — both are REQUIRED,
@@ -27,6 +54,12 @@ dev = ["pytest>=7.0"]
 
 [project.scripts]
 droste = "core.droste_cli:main"
+
+[project.urls]
+Homepage = "https://github.com/lorismascio17/droste-memory"
+Repository = "https://github.com/lorismascio17/droste-memory"
+Issues = "https://github.com/lorismascio17/droste-memory/issues"
+PyPI = "https://pypi.org/project/droste-memory/"
 
 [tool.pytest.ini_options]
 # Deterministic regression suite lives in tests/; eval/ stays benchmark-only.
