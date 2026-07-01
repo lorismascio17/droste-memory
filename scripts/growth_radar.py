@@ -21,6 +21,7 @@ MCP_REGISTRY_API = (
     "https://registry.modelcontextprotocol.io/v0.1/servers?"
     + urllib.parse.urlencode({"search": "io.github.lorismascio17/droste-memory"})
 )
+MCP_SERVER_NAME = "io.github.lorismascio17/droste-memory"
 
 
 def read_pyproject_version() -> str:
@@ -61,6 +62,27 @@ def fetch_json(url: str) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
+def registry_entries(payload: dict) -> list[dict]:
+    entries = []
+    for item in payload.get("servers") or []:
+        server = item.get("server") if isinstance(item, dict) else None
+        if not isinstance(server, dict):
+            server = item if isinstance(item, dict) else {}
+        if server.get("name") == MCP_SERVER_NAME:
+            entries.append({"server": server, "meta": item.get("_meta", {})})
+    return entries
+
+
+def latest_registry_version(entries: list[dict]) -> str | None:
+    if not entries:
+        return None
+    for entry in entries:
+        official = entry.get("meta", {}).get("io.modelcontextprotocol.registry/official", {})
+        if official.get("isLatest") is True:
+            return str(entry["server"].get("version"))
+    return str(entries[-1]["server"].get("version"))
+
+
 def main() -> None:
     print("Droste growth radar")
     print("===================")
@@ -90,14 +112,16 @@ def main() -> None:
         print(f"PyPI check failed: {exc}")
 
     registry_visible = None
+    registry_version = None
     try:
         registry = fetch_json(MCP_REGISTRY_API)
-        servers = registry.get("servers") or []
-        registry_visible = any(
-            server.get("name") == "io.github.lorismascio17/droste-memory"
-            for server in servers
-        )
-        print(f"MCP Registry visible: {'yes' if registry_visible else 'no'}")
+        entries = registry_entries(registry)
+        registry_visible = bool(entries)
+        registry_version = latest_registry_version(entries)
+        if registry_visible:
+            print(f"MCP Registry visible: yes (latest {registry_version})")
+        else:
+            print("MCP Registry visible: no")
     except Exception as exc:
         print(f"MCP Registry check failed: {exc}")
 
@@ -119,7 +143,7 @@ def main() -> None:
                 f"- Upload PyPI {local_version}: "
                 f"python -m twine upload dist/droste_memory-{local_version}*"
             )
-    elif registry_visible is False:
+    elif registry_visible is False or registry_version != local_version:
         print("- Run GitHub Actions workflow: Publish MCP Registry.")
     elif registry_visible is True:
         print("- Start directory submissions from docs/SUBMISSION_PACK.md.")
