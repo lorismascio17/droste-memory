@@ -1,6 +1,6 @@
 [project]
 name = "droste-memory"
-version = "1.1.5"
+version = "1.1.6"
 readme = "README.md"
 description = "Local hybrid structural and semantic graph memory engine."
 license = "MIT"
@@ -71,4 +71,10 @@ markers = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["core*"]
+include = ["core*", "visualizer*"]
+
+[tool.setuptools.package-data]
+# `droste view` serves these straight from site-packages: the cockpit page,
+# its Jinja template, and the public demo graph used as the zero-setup
+# fallback. Without them the README's third command crashes on a pip install.
+visualizer = ["*.html", "demo_graph.json", "templates/*.html"]

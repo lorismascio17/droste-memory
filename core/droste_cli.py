@@ -41,7 +41,7 @@ from core.droste_engine import DEFAULT_DB_PATH, DrosteConceptEngine
 from core.droste_ingester import DrosteProjectIngester, droste_zoom_query
 
 
-VERSION = "v1.1.5-Alpha-Sharded"
+VERSION = "v1.1.6-Alpha-Sharded"
 VISUALIZER_CAMERA_URL = "http://127.0.0.1:5000/api/camera"
 
 RESET = "\033[0m"
