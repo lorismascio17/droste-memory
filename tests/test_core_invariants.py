@@ -317,3 +317,77 @@ def test_windows_utf8_output_guard_reconfigures_and_swallows_failures():
     non_windows = FakeStream()
     _configure_windows_utf8_output("linux", non_windows, non_windows)
     assert non_windows.calls == []
+
+
+# ---------------------------------------------------------------------------
+# 7) FOCUS WORMHOLE PINNING  (the moat must survive small budgets)
+# ---------------------------------------------------------------------------
+def _pin_project(tmp_path: Path) -> Path:
+    """A focus symbol with one true caller, drowned in lexical decoys that
+    shout the query tokens without any causal tie."""
+    proj = tmp_path / "pinproj"
+    proj.mkdir()
+    (proj / "engine.py").write_text(
+        'def fingerprint_shard(data):\n'
+        '    """Compute the structural shard fingerprint."""\n'
+        '    return hash(data)\n'
+        '\n'
+        '\n'
+        'def save_everything(payload):\n'
+        '    """Persist a payload."""\n'
+        '    return fingerprint_shard(payload)\n',
+        encoding="utf-8",
+    )
+    for i in range(6):
+        (proj / f"shard_fingerprint_notes_{i}.py").write_text(
+            f'def shard_fingerprint_report_{i}():\n'
+            f'    """shard fingerprint dirty shard fingerprint tracking shard."""\n'
+            f'    return {i}\n',
+            encoding="utf-8",
+        )
+    return proj
+
+
+def test_focus_causal_neighbours_survive_small_budget(ingester, tmp_path):
+    """Regression: at budget 1500 the focus's direct caller must be selected
+    ahead of lexical lookalikes. Before the pin fix, neighbor-recall at 1500
+    measured 0.068 with a NEGATIVE graph lift (-0.18): the causal neighbours
+    were crowded out by keyword-matching seeds."""
+    proj = _pin_project(tmp_path)
+    ingester.index_project(str(proj), reset=True, max_files=50, max_symbols=500)
+    res = ingester.get_context("fingerprint_shard", budget=1500)
+    titles = " | ".join(s["node"]["title"] for s in res["selected_nodes"])
+    roles = {s.get("wormhole_role") for s in res["selected_nodes"]}
+    assert "caller" in roles, f"focus caller crowded out of the pack: {titles}"
+    assert any(
+        "save_everything" in s["node"]["title"] for s in res["selected_nodes"]
+    ), f"true caller missing: {titles}"
+
+
+def test_critical_neighbour_never_vanishes(ingester, tmp_path):
+    """A neighbour whose body carries critical keywords (jwt/verify/...) used
+    to be dropped entirely when its full form did not fit the per-node cap
+    (the critical branch returned None). It must land at least as a stub."""
+    proj = tmp_path / "critproj"
+    proj.mkdir()
+    filler = "\n".join(
+        f'    jwt_check_{i} = verify("jwt token secret {i}")' for i in range(40)
+    )
+    (proj / "svc.py").write_text(
+        'def issue_token(claims):\n'
+        '    """Mint a token."""\n'
+        '    return sign(claims)\n'
+        '\n'
+        '\n'
+        'def gatekeeper(request):\n'
+        '    """Verify jwt before issuing."""\n'
+        f'{filler}\n'
+        '    return issue_token(request)\n',
+        encoding="utf-8",
+    )
+    ingester.index_project(str(proj), reset=True, max_files=20, max_symbols=200)
+    res = ingester.get_context("issue_token", budget=1500)
+    titles = " | ".join(s["node"]["title"] for s in res["selected_nodes"])
+    assert any(
+        "gatekeeper" in s["node"]["title"] for s in res["selected_nodes"]
+    ), f"critical caller vanished instead of degrading to a stub: {titles}"

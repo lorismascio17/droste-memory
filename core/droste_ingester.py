@@ -779,15 +779,36 @@ class DrosteProjectIngester:
 
         if len(candidates) > 1:
             focus_candidate = candidates[0]
-            neighbor_candidates = candidates[1:]
-            neighbor_candidates.sort(
+            focus_id = focus_candidate[1].id
+            # PIN the focus node's own causal wormholes (its direct callers and
+            # callees) immediately after the focus, ahead of every secondary
+            # lexical seed. Wormholes inherit the focus's *raw lexical* score,
+            # but the focus is chosen by the HYBRID rank — so its raw score can
+            # be lower than noisy keyword-matching seeds, and the plain score
+            # sort used to push the causal neighbours below the budget cliff
+            # (measured: neighbor-recall 0.068 / graph lift -0.18 at budget
+            # 1500). The causal neighbours of the answer ARE the context; they
+            # must never lose to a lexical lookalike.
+            pinned: list[tuple[int, DrosteNode, dict[str, Any] | None]] = []
+            others: list[tuple[int, DrosteNode, dict[str, Any] | None]] = []
+            for item in candidates[1:]:
+                via = item[2]
+                if (
+                    via is not None
+                    and via.get("origin") == focus_id
+                    and via.get("link", {}).get("type") == "syntax_dependency"
+                ):
+                    pinned.append(item)   # keeps most-specific-first span order
+                else:
+                    others.append(item)
+            others.sort(
                 key=lambda item: (
                     not self._node_contains_critical_lod_signal(item[1]),
                     -item[0],
                     item[1].title,
                 )
             )
-            candidates = [focus_candidate, *neighbor_candidates]
+            candidates = [focus_candidate, *pinned, *others]
 
         terms = self._terms(query)
         sections: list[str] = []
@@ -2089,14 +2110,19 @@ class DrosteProjectIngester:
         if is_critical:
             if is_focus and len(full) <= MICRO_FOCUS_CHARS:
                 return full, "full"
-            return None
+            # A critical SEED must be full or nothing (never summarize risky
+            # code). A critical NEIGHBOUR is different: dropping it hides a
+            # true causal edge, which is worse than a stub — fall through.
+            if via is None:
+                return None
 
         is_file = node.node_type == "file"
 
-        # 2) CALLER STUB — external callers must land as compact, distinct
-        #    contracts (<= CALLER_STUB_CHARS), never dragging in a file body.
-        if via and via.get("role") == "caller" and not is_file:
-            stub = self._caller_stub(node, prefix)
+        # 2) WORMHOLE STUB — causal neighbours (callers AND callees) must land
+        #    as compact, distinct contracts (<= CALLER_STUB_CHARS), never
+        #    dragging in a file body and never silently vanishing.
+        if via and not is_file:
+            stub = self._caller_stub(node, prefix, role=str(via.get("role") or "caller"))
             if stub and len(stub) <= remaining:
                 return stub, "contract"
 
@@ -2113,6 +2139,21 @@ class DrosteProjectIngester:
                 contract = tag + contract_body if prefix else contract_body
                 if len(contract) <= remaining:
                     return contract, "contract"
+
+        # 3b) MINIMAL WORMHOLE LINE — the guaranteed floor for a causal
+        #     neighbour. A true caller/callee must NEVER silently vanish just
+        #     because its richer forms don't fit the per-node cap: one plain
+        #     line (role + symbol + location) always lands.
+        if via and not is_file:
+            role = str(via.get("role") or "ref")
+            loc = node.source_path or ""
+            if loc and node.line_start:
+                loc = f"{loc}:{node.line_start}"
+            line = f"{role}: {node.title} — {loc}" if loc else f"{role}: {node.title}"
+            if len(line) > remaining:
+                line = f"{role}: {node.title}"
+            if len(line) <= remaining:
+                return line, "stub"
 
         # 4) FILE SKELETON — focus symbol full, every other top-level def/class
         #    demoted to a one-line contract, fitted hard to `remaining`.
@@ -2275,9 +2316,9 @@ class DrosteProjectIngester:
             return out
         return ""
 
-    def _caller_stub(self, node: DrosteNode, prefix: str) -> str:
-        """Compact, distinct contract stub for an external caller, hard-capped
-        at CALLER_STUB_CHARS so callers stay visible as their own entries."""
+    def _caller_stub(self, node: DrosteNode, prefix: str, role: str = "caller") -> str:
+        """Compact, distinct contract stub for a causal neighbour, hard-capped
+        at CALLER_STUB_CHARS so neighbours stay visible as their own entries."""
         loc = node.source_path or "(memory)"
         if node.line_start and node.line_end:
             loc = f"{loc}:{node.line_start}-{node.line_end}"
@@ -2285,7 +2326,7 @@ class DrosteProjectIngester:
         body = f"### {node.title}\nsource: {loc}"
         if sig:
             body += f"\n{sig}"
-        head = (prefix.rstrip("\n") + " [caller-contract]\n") if prefix else ""
+        head = (prefix.rstrip("\n") + f" [{role}-contract]\n") if prefix else ""
         return (head + body)[:CALLER_STUB_CHARS]
 
     def _signature_line(self, node: DrosteNode) -> str:
