@@ -37,7 +37,9 @@ jobs:
 
           root = ET.parse(report).getroot()
           for case in root.iter("testcase"):
-              problem = case.find("failure") or case.find("error")
+              problem = case.find("failure")
+              if problem is None:
+                  problem = case.find("error")
               if problem is None:
                   continue
               message = problem.get("message") or problem.text or "pytest failure"
