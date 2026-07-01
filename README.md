@@ -75,7 +75,7 @@ Running `droste` with no arguments prints the command palette:
                   '-----------------------'
 
 DROSTE-MEMORY // RIGID FRACTAL RADIAL LAYOUT
-Local Graph Engine v1.1.5-Alpha-Sharded
+Local Graph Engine v1.1.6-Alpha-Sharded
 
 Commands
   droste index <path> [--reset]
@@ -316,9 +316,16 @@ python scripts/growth_radar.py
 
 ## Status
 
-**v1.1.5 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
+**v1.1.6 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
 visualizer and MCP server are working and tested. Packaging/distribution are
 maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
+
+### What's new in v1.1.6
+
+- Fixed the PyPI wheel packaging for `droste view` by shipping the visualizer
+  HTML/templates and public demo graph inside the installed package.
+- Verified the three-command pitch from a clean install:
+  `pip install droste-memory`, `droste index .`, `droste view`.
 
 ### What's new in v1.1.5
 

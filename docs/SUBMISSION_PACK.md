@@ -114,10 +114,16 @@ Droste indexes a repository into a structural + semantic graph and exposes causa
 
 ## 4. Dev.to Follow-up Comment
 
-Add a short update below the existing article after `1.1.5` is public:
+Add a short update below the existing article after `1.1.6` is public:
 
 ```text
-Update: Droste now includes server.json for MCP Registry publishing and ships Codex + Claude skill templates under integrations/. The goal is to make it usable both as an MCP server and as an agent-side workflow skill.
+Update: Droste v1.1.6 fixes the PyPI wheel packaging for `droste view`, so the clean install flow now works end to end:
+
+python -m pip install --upgrade droste-memory
+droste index .
+droste view
+
+It also includes server.json for MCP Registry publishing and ships Codex + Claude skill templates under integrations/. The goal is to make it usable both as an MCP server and as an agent-side workflow skill.
 ```
 
 ## 5. Direct Outreach

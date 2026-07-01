@@ -58,22 +58,25 @@ After the radar reports `MCP Registry visible: yes`, use
 Title:
 
 ```text
-Droste v1.1.5 - Causal context delivery
+Droste v1.1.6 - Visualizer wheel packaging
 ```
 
 Body:
 
 ```text
-Droste v1.1.5 makes the causal graph visible at realistic small budgets and prevents self-index contamination.
+Droste v1.1.6 fixes the PyPI wheel packaging for `droste view`, so a clean install can run the full three-command flow.
 
 Highlights:
-- Excludes Droste's own .droste/.tmp/*.egg-info data dirs from indexing.
-- Pins the focus node's direct callers/callees before secondary lexical matches.
-- Guarantees compact stubs for true causal neighbours when full context cannot fit.
+- Ships the visualizer cockpit, templates, and public demo graph in the wheel.
+- Keeps the v1.1.5 causal-context fixes: self-index protection, pinned caller/callee neighbours, and compact causal stubs.
 - Keeps Codex and Claude skill templates available for agent-side adoption.
 
 Install:
 python -m pip install --upgrade droste-memory
+
+View:
+droste index .
+droste view
 
 MCP:
 droste mcp

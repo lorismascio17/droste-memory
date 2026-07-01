@@ -2,6 +2,15 @@
 
 All notable public release notes for Droste are tracked here.
 
+## v1.1.6 - Visualizer Wheel Packaging
+
+- Fixed the PyPI wheel packaging for `droste view` by including the visualizer
+  cockpit page, templates, and public demo graph in installed distributions.
+- Verified that the public three-command flow works from a clean install:
+  `pip install droste-memory`, `droste index .`, `droste view`.
+- Keeps the v1.1.5 causal-context improvements while making the visual command
+  usable for first-time PyPI users.
+
 ## v1.1.5 - Causal Context Delivery
 
 - Prevented self-index contamination by excluding Droste's own `.droste/`,

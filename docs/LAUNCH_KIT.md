@@ -8,9 +8,42 @@ the tone technical: ask for feedback, not stars.
 - GitHub: https://github.com/lorismascio17/droste-memory
 - PyPI: https://pypi.org/project/droste-memory/
 - Install: `python -m pip install --upgrade droste-memory`
-- Latest version: `1.1.5`
+- Latest version: `1.1.6`
 - Main command: `droste`
 - MCP command: `droste mcp`
+
+## GitHub Release Notes: v1.1.6
+
+Title:
+
+```text
+Droste v1.1.6 - Visualizer wheel packaging
+```
+
+Body:
+
+```text
+Droste v1.1.6 fixes the PyPI wheel packaging for `droste view`, the visual command in the three-command pitch.
+
+The previous PyPI build could install and index, but the installed wheel did not ship the visualizer assets needed by `droste view`. This release includes the cockpit page, templates, and public demo graph in the package, so a clean install can run:
+
+python -m pip install --upgrade droste-memory
+droste index .
+droste view
+
+It keeps the v1.1.5 context-quality fixes:
+- self-index contamination is blocked
+- direct caller/callee neighbours are pinned at small budgets
+- compact causal stubs keep true wormholes visible when full context cannot fit
+
+MCP server:
+
+droste mcp
+
+Server name:
+
+io.github.lorismascio17/droste-memory
+```
 
 ## GitHub Release Notes: v1.1.5
 
@@ -146,12 +179,16 @@ I am looking for technical feedback, especially around retrieval quality, MCP er
 ## Short Social Post
 
 ```text
-I released Droste v1.1.5.
+I released Droste v1.1.6.
 
 Droste is a local MCP code-memory engine for AI coding agents: structural graph + semantic search, sharded local storage, project isolation, fractal code visualization, and MCP/agent-skill support.
 
+This release fixes the PyPI wheel packaging for `droste view`, so the three-command flow now works from a clean install:
+
 Install:
 python -m pip install --upgrade droste-memory
+droste index .
+droste view
 
 GitHub:
 https://github.com/lorismascio17/droste-memory
@@ -174,8 +211,8 @@ python
 
 ## Launch Order
 
-1. Create the GitHub Release for `v1.1.5` using the release notes above.
-2. Confirm PyPI shows version `1.1.5`.
+1. Create the GitHub Release for `v1.1.6` using the release notes above.
+2. Confirm PyPI shows version `1.1.6`.
 3. Post Show HN first.
 4. Wait and respond to comments for at least a few hours.
 5. Post to one targeted Reddit community only after checking the rules.
