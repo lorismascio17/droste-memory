@@ -297,6 +297,22 @@ cross-process shard race). `eval/` = performance/quality benchmarks.
 
 ---
 
+## Distribution
+
+Launch and directory submission materials live in:
+
+- `docs/GROWTH_ENGINE.md`
+- `docs/SUBMISSION_PACK.md`
+- `docs/LAUNCH_KIT.md`
+
+Run the read-only radar before submitting anywhere:
+
+```bash
+python scripts/growth_radar.py
+```
+
+---
+
 ## Status
 
 **v1.1.3 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal

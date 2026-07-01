@@ -45,12 +45,15 @@ Publish order:
 python scripts/growth_radar.py
 ```
 
+After the radar reports `MCP Registry visible: yes`, use
+`docs/SUBMISSION_PACK.md` for directory submissions and awesome-list PR copy.
+
 ## GitHub Release Copy
 
 Title:
 
 ```text
-Droste v1.1.2 - MCP Registry launch prep
+Droste v1.1.3 - MCP Registry and agent skills
 ```
 
 Body:
