@@ -116,6 +116,11 @@ SKIP_DIRS = {
     "generated",
     "gen",
     "Pods",
+    # Droste's own data/scratch dirs. Without these the indexer swallows its
+    # own shard store: 96% junk files, and shard JSON re-ingests OTHER indexed
+    # projects' code snippets as phantom symbols (cross-project contamination).
+    ".droste",
+    ".tmp",
 }
 
 # Fix (b): deterministic guard against generated/minified bundles. A single
@@ -1265,7 +1270,9 @@ class DrosteProjectIngester:
         for directory, dirnames, filenames in os.walk(root):
             dirnames[:] = [
                 dirname for dirname in sorted(dirnames)
-                if dirname not in SKIP_DIRS and not dirname.startswith(".cache")
+                if dirname not in SKIP_DIRS
+                and not dirname.startswith(".cache")
+                and not dirname.endswith(".egg-info")
             ]
             current_dir = Path(directory)
             for filename in sorted(filenames):
