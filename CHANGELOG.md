@@ -2,6 +2,15 @@
 
 All notable public release notes for Droste are tracked here.
 
+## v1.1.4 - Python 3.10/3.11 Compatibility
+
+- Replaced Python 3.12-only `Path.walk()` usage with `os.walk()` so Droste's
+  declared Python 3.10+ support is real in CI and installs.
+- Hardened CI failure reporting so pytest failures surface as GitHub
+  annotations for faster release debugging.
+- Added MCP Registry publish release-alignment checks so registry metadata is
+  only published after the matching PyPI package is live.
+
 ## v1.1.3 - Agent Skill Distribution
 
 - Added public Codex and Claude skill templates in `integrations/` so agents can

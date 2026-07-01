@@ -75,7 +75,7 @@ Running `droste` with no arguments prints the command palette:
                   '-----------------------'
 
 DROSTE-MEMORY // RIGID FRACTAL RADIAL LAYOUT
-Local Graph Engine v1.1.3-Alpha-Sharded
+Local Graph Engine v1.1.4-Alpha-Sharded
 
 Commands
   droste index <path> [--reset]
@@ -315,9 +315,17 @@ python scripts/growth_radar.py
 
 ## Status
 
-**v1.1.3 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
+**v1.1.4 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
 visualizer and MCP server are working and tested. Packaging/distribution are
 maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
+
+### What's new in v1.1.4
+
+- Fixed Python 3.10/3.11 compatibility by replacing Python 3.12-only
+  `Path.walk()` usage.
+- Hardened MCP Registry publishing so metadata is only published after the
+  matching PyPI release is live.
+- Improved CI diagnostics for faster multi-version release debugging.
 
 ### What's new in v1.1.3
 

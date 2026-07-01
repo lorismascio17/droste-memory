@@ -15,6 +15,7 @@ import ast
 import hashlib
 import json
 import math
+import os
 import re
 import textwrap
 from dataclasses import dataclass
@@ -1261,15 +1262,16 @@ class DrosteProjectIngester:
 
     def _collect_files(self, root: Path, max_files: int) -> list[Path]:
         files: list[Path] = []
-        for directory, dirnames, filenames in root.walk():
+        for directory, dirnames, filenames in os.walk(root):
             dirnames[:] = [
                 dirname for dirname in sorted(dirnames)
                 if dirname not in SKIP_DIRS and not dirname.startswith(".cache")
             ]
+            current_dir = Path(directory)
             for filename in sorted(filenames):
                 if len(files) >= max_files:
                     return files
-                path = directory / filename
+                path = current_dir / filename
                 if filename in SKIP_FILES:
                     continue
                 if path.suffix.lower() not in TEXT_EXTENSIONS:

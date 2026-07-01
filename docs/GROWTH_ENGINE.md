@@ -57,20 +57,19 @@ After the radar reports `MCP Registry visible: yes`, use
 Title:
 
 ```text
-Droste v1.1.3 - MCP Registry and agent skills
+Droste v1.1.4 - Python 3.10/3.11 compatibility
 ```
 
 Body:
 
 ```text
-Droste v1.1.3 prepares the project for official MCP Registry publishing and agent-skill adoption.
+Droste v1.1.4 fixes Python 3.10/3.11 compatibility and keeps MCP Registry publishing aligned with PyPI.
 
 Highlights:
-- Added MCP Registry ownership marker to the README/PyPI description.
-- Added server.json for MCP server discovery.
-- Added a manual GitHub Actions workflow to publish Droste to the MCP Registry.
-- Added a scheduled growth radar workflow to keep public discovery state visible.
-- Added Codex and Claude skill templates for agent-side adoption.
+- Replaced Python 3.12-only Path.walk usage with os.walk.
+- Hardened CI diagnostics across the Python version matrix.
+- MCP Registry publishing now waits until pyproject.toml, server.json and PyPI all point to the same version.
+- Codex and Claude skill templates remain available for agent-side adoption.
 
 Install:
 python -m pip install --upgrade droste-memory

@@ -8,29 +8,28 @@ the tone technical: ask for feedback, not stars.
 - GitHub: https://github.com/lorismascio17/droste-memory
 - PyPI: https://pypi.org/project/droste-memory/
 - Install: `python -m pip install --upgrade droste-memory`
-- Latest version: `1.1.3`
+- Latest version: `1.1.4`
 - Main command: `droste`
 - MCP command: `droste mcp`
 
-## GitHub Release Notes: v1.1.3
+## GitHub Release Notes: v1.1.4
 
 Title:
 
 ```text
-Droste v1.1.3 - MCP Registry and agent skills
+Droste v1.1.4 - Python 3.10/3.11 compatibility
 ```
 
 Body:
 
 ```text
-Droste v1.1.3 turns the project into a more discoverable MCP and agent-skill package.
+Droste v1.1.4 is a patch release that fixes Python 3.10/3.11 compatibility and hardens MCP Registry publishing.
 
 Highlights:
-- Added MCP Registry ownership metadata in the README/PyPI description.
-- Added server.json for official MCP Registry publishing.
-- Added a manual GitHub Actions workflow to publish Droste to the MCP Registry.
-- Added a scheduled Growth Radar workflow to monitor GitHub, PyPI and MCP Registry visibility.
-- Added public Codex and Claude skill templates so agents can learn Droste's safe indexing and context workflow.
+- Replaced Python 3.12-only Path.walk usage with os.walk.
+- CI now passes on the declared Python version matrix.
+- MCP Registry publishing now checks that pyproject.toml, server.json and PyPI all point to the same version before publishing.
+- v1.1.3 added public Codex and Claude skill templates for agent-side adoption.
 
 Install or upgrade:
 
@@ -147,9 +146,9 @@ I am looking for technical feedback, especially around retrieval quality, MCP er
 ## Short Social Post
 
 ```text
-I released Droste v1.1.1.
+I released Droste v1.1.4.
 
-Droste is a local MCP code-memory engine for AI coding agents: structural graph + semantic search, sharded local storage, project isolation, and fractal code visualization.
+Droste is a local MCP code-memory engine for AI coding agents: structural graph + semantic search, sharded local storage, project isolation, fractal code visualization, and MCP/agent-skill support.
 
 Install:
 python -m pip install --upgrade droste-memory
@@ -175,8 +174,8 @@ python
 
 ## Launch Order
 
-1. Create the GitHub Release for `v1.1.1` using the release notes above.
-2. Confirm PyPI shows version `1.1.1`.
+1. Create the GitHub Release for `v1.1.4` using the release notes above.
+2. Confirm PyPI shows version `1.1.4`.
 3. Post Show HN first.
 4. Wait and respond to comments for at least a few hours.
 5. Post to one targeted Reddit community only after checking the rules.

@@ -114,7 +114,7 @@ Droste indexes a repository into a structural + semantic graph and exposes causa
 
 ## 4. Dev.to Follow-up Comment
 
-Add a short update below the existing article after `1.1.3` is public:
+Add a short update below the existing article after `1.1.4` is public:
 
 ```text
 Update: Droste now includes server.json for MCP Registry publishing and ships Codex + Claude skill templates under integrations/. The goal is to make it usable both as an MCP server and as an agent-side workflow skill.
@@ -144,4 +144,3 @@ https://github.com/lorismascio17/droste-memory
 - Do not use bots to comment, vote, repost or DM.
 - Do not submit to Reddit/HN from a low-trust account; participate first.
 - Prefer registry/list submissions over social posting.
-
