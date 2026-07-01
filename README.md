@@ -75,7 +75,7 @@ Running `droste` with no arguments prints the command palette:
                   '-----------------------'
 
 DROSTE-MEMORY // RIGID FRACTAL RADIAL LAYOUT
-Local Graph Engine v1.1.4-Alpha-Sharded
+Local Graph Engine v1.1.5-Alpha-Sharded
 
 Commands
   droste index <path> [--reset]
@@ -316,9 +316,18 @@ python scripts/growth_radar.py
 
 ## Status
 
-**v1.1.4 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
+**v1.1.5 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
 visualizer and MCP server are working and tested. Packaging/distribution are
 maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
+
+### What's new in v1.1.5
+
+- Fixed self-index contamination by excluding Droste's own `.droste/`, `.tmp/`,
+  and `*.egg-info` directories from project scans.
+- Improved small-budget context packing by pinning the focus node's direct
+  callers/callees before secondary lexical matches.
+- Guaranteed compact stubs for true causal neighbours so important wormholes do
+  not disappear when full context cannot fit.
 
 ### What's new in v1.1.4
 

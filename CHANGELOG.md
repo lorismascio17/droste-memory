@@ -2,6 +2,19 @@
 
 All notable public release notes for Droste are tracked here.
 
+## v1.1.5 - Causal Context Delivery
+
+- Prevented self-index contamination by excluding Droste's own `.droste/`,
+  `.tmp/`, and `*.egg-info` data directories from project indexing.
+- Pinned the focus node's direct `syntax_dependency` callers/callees directly
+  after the focus in packed context, so causal neighbours survive realistic
+  small budgets before secondary lexical matches.
+- Added guaranteed compact stubs for caller/callee neighbours, including
+  critical/risky neighbours that previously could vanish when full context did
+  not fit.
+- Added adversarial regression tests for focus-wormhole pinning and critical
+  neighbour stubs. Suite now covers 28 deterministic tests.
+
 ## v1.1.4 - Python 3.10/3.11 Compatibility
 
 - Replaced Python 3.12-only `Path.walk()` usage with `os.walk()` so Droste's

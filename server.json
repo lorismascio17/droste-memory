@@ -3,7 +3,7 @@
   "name": "io.github.lorismascio17/droste-memory",
   "title": "Droste",
   "description": "Local code-memory graph for AI coding agents.",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "websiteUrl": "https://github.com/lorismascio17/droste-memory",
   "repository": {
     "url": "https://github.com/lorismascio17/droste-memory",
@@ -13,7 +13,7 @@
     {
       "registryType": "pypi",
       "identifier": "droste-memory",
-      "version": "1.1.4",
+      "version": "1.1.5",
       "packageArguments": [
         {
           "type": "positional",

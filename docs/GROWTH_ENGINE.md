@@ -58,19 +58,19 @@ After the radar reports `MCP Registry visible: yes`, use
 Title:
 
 ```text
-Droste v1.1.4 - Python 3.10/3.11 compatibility
+Droste v1.1.5 - Causal context delivery
 ```
 
 Body:
 
 ```text
-Droste v1.1.4 fixes Python 3.10/3.11 compatibility and keeps MCP Registry publishing aligned with PyPI.
+Droste v1.1.5 makes the causal graph visible at realistic small budgets and prevents self-index contamination.
 
 Highlights:
-- Replaced Python 3.12-only Path.walk usage with os.walk.
-- Hardened CI diagnostics across the Python version matrix.
-- MCP Registry publishing now waits until pyproject.toml, server.json and PyPI all point to the same version.
-- Codex and Claude skill templates remain available for agent-side adoption.
+- Excludes Droste's own .droste/.tmp/*.egg-info data dirs from indexing.
+- Pins the focus node's direct callers/callees before secondary lexical matches.
+- Guarantees compact stubs for true causal neighbours when full context cannot fit.
+- Keeps Codex and Claude skill templates available for agent-side adoption.
 
 Install:
 python -m pip install --upgrade droste-memory
