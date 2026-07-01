@@ -23,6 +23,7 @@ present wherever developers and MCP clients search for code-memory tools.
 | P1 | awesome-mcp-servers | High-signal GitHub list | Open a focused PR |
 | P1 | Dev.to technical article | Searchable explanation | Keep article linked from launch posts |
 | P1 | Codex and Claude skill templates | Agent-side adoption path | Promote `integrations/*-skill/droste-code-memory` |
+| P1 | Platform integration brief | Maintainer-facing adoption path | Share `docs/PLATFORM_INTEGRATION_BRIEF.md` with Codex/Claude/MCP maintainers |
 | P2 | Reddit/HN | Feedback once account trust exists | Participate first, then post |
 | P2 | Direct outreach | High-quality maintainer feedback | 10 targeted messages, no mass DMs |
 
@@ -121,6 +122,13 @@ Copy integrations/codex-skill/droste-code-memory into ~/.codex/skills/ and ask:
 For Claude, import or copy `integrations/claude-skill/droste-code-memory/` as a
 Claude Skill package. This gives Droste an agent-native adoption path separate
 from social posting.
+
+## Platform Integration
+
+Use `docs/PLATFORM_INTEGRATION_BRIEF.md` when contacting MCP client maintainers,
+agent-skill directories, Anthropic/Claude ecosystem maintainers, Codex ecosystem
+maintainers or code-intelligence tool authors. It is intentionally technical:
+the ask is evaluation, listing or integration feedback, not promotion.
 
 ## Direct Outreach Copy
 

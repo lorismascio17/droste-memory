@@ -304,6 +304,7 @@ Launch and directory submission materials live in:
 - `docs/GROWTH_ENGINE.md`
 - `docs/SUBMISSION_PACK.md`
 - `docs/LAUNCH_KIT.md`
+- `docs/PLATFORM_INTEGRATION_BRIEF.md`
 
 Run the read-only radar before submitting anywhere:
 
