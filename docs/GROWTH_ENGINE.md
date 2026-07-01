@@ -22,6 +22,7 @@ present wherever developers and MCP clients search for code-memory tools.
 | P1 | Glama MCP directory | Large MCP server directory | Submit or claim after MCP Registry publish |
 | P1 | awesome-mcp-servers | High-signal GitHub list | Open a focused PR |
 | P1 | Dev.to technical article | Searchable explanation | Keep article linked from launch posts |
+| P1 | Codex and Claude skill templates | Agent-side adoption path | Promote `integrations/*-skill/droste-code-memory` |
 | P2 | Reddit/HN | Feedback once account trust exists | Participate first, then post |
 | P2 | Direct outreach | High-quality maintainer feedback | 10 targeted messages, no mass DMs |
 
@@ -55,13 +56,14 @@ Droste v1.1.2 - MCP Registry launch prep
 Body:
 
 ```text
-Droste v1.1.2 prepares the project for official MCP Registry publishing.
+Droste v1.1.3 prepares the project for official MCP Registry publishing and agent-skill adoption.
 
 Highlights:
 - Added MCP Registry ownership marker to the README/PyPI description.
 - Added server.json for MCP server discovery.
 - Added a manual GitHub Actions workflow to publish Droste to the MCP Registry.
 - Added a scheduled growth radar workflow to keep public discovery state visible.
+- Added Codex and Claude skill templates for agent-side adoption.
 
 Install:
 python -m pip install --upgrade droste-memory
@@ -88,6 +90,31 @@ Adds Droste, an open-source local MCP code-memory engine for AI coding agents.
 
 It indexes a repository into a structural + semantic graph and exposes context retrieval through MCP, with sharded local storage and project-root isolation.
 ```
+
+## Agent Skill Distribution
+
+The public Codex skill lives at:
+
+```text
+integrations/codex-skill/droste-code-memory/
+```
+
+The Claude-compatible skill lives at:
+
+```text
+integrations/claude-skill/droste-code-memory/
+```
+
+Suggested install copy:
+
+```text
+Copy integrations/codex-skill/droste-code-memory into ~/.codex/skills/ and ask:
+"Use $droste-code-memory to index this repository and retrieve causal context before editing."
+```
+
+For Claude, import or copy `integrations/claude-skill/droste-code-memory/` as a
+Claude Skill package. This gives Droste an agent-native adoption path separate
+from social posting.
 
 ## Direct Outreach Copy
 

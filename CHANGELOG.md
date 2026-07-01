@@ -2,6 +2,12 @@
 
 All notable public release notes for Droste are tracked here.
 
+## v1.1.3 - Agent Skill Distribution
+
+- Added public Codex and Claude skill templates in `integrations/` so agents can
+  learn Droste's safe indexing and context workflow.
+- Documented agent skill installation in the README and growth engine.
+
 ## v1.1.2 - MCP Registry Launch Prep
 
 - Added the PyPI README ownership marker required by the official MCP Registry:

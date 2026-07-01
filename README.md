@@ -75,7 +75,7 @@ Running `droste` with no arguments prints the command palette:
                   '-----------------------'
 
 DROSTE-MEMORY // RIGID FRACTAL RADIAL LAYOUT
-Local Graph Engine v1.1.2-Alpha-Sharded
+Local Graph Engine v1.1.3-Alpha-Sharded
 
 Commands
   droste index <path> [--reset]
@@ -241,6 +241,49 @@ Key tools: `droste_index_project`, `droste_get_context`, `droste_status`.
 
 ---
 
+## Use it as an agent skill
+
+Droste also ships agent skill templates for Codex and Claude. They teach an
+agent how to use Droste safely: isolated DBs, indexing, `droste context`, MCP
+config, and root-contamination guardrails.
+
+Codex skill:
+
+```text
+integrations/codex-skill/droste-code-memory/
+```
+
+Claude-compatible skill:
+
+```text
+integrations/claude-skill/droste-code-memory/
+```
+
+Install the Codex skill by copying the folder into your Codex skills directory:
+
+```bash
+# macOS / Linux
+mkdir -p ~/.codex/skills
+cp -R integrations/codex-skill/droste-code-memory ~/.codex/skills/
+```
+
+```powershell
+# Windows PowerShell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.codex\skills" | Out-Null
+Copy-Item -Recurse -Force integrations\codex-skill\droste-code-memory "$env:USERPROFILE\.codex\skills\"
+```
+
+Then ask Codex:
+
+```text
+Use $droste-code-memory to index this repository and retrieve causal context before editing.
+```
+
+For Claude, import or copy the Claude skill folder as a Claude Skill package and
+keep its `SKILL.md`, `references/`, and `scripts/` together.
+
+---
+
 ## Development
 
 ```bash
@@ -256,9 +299,13 @@ cross-process shard race). `eval/` = performance/quality benchmarks.
 
 ## Status
 
-**v1.1.2 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
+**v1.1.3 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
 visualizer and MCP server are working and tested. Packaging/distribution are
 maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
+
+### What's new in v1.1.3
+
+- Added public Codex and Claude skill templates for agent-side Droste adoption.
 
 ### What's new in v1.1.2
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Droste Code Memory"
+  short_description: "Use Droste as local code memory"
+  default_prompt: "Use $droste-code-memory to index this repository and retrieve causal context before editing."

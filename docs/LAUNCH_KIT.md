@@ -8,9 +8,42 @@ the tone technical: ask for feedback, not stars.
 - GitHub: https://github.com/lorismascio17/droste-memory
 - PyPI: https://pypi.org/project/droste-memory/
 - Install: `python -m pip install --upgrade droste-memory`
-- Latest version: `1.1.1`
+- Latest version: `1.1.3`
 - Main command: `droste`
 - MCP command: `droste mcp`
+
+## GitHub Release Notes: v1.1.3
+
+Title:
+
+```text
+Droste v1.1.3 - MCP Registry and agent skills
+```
+
+Body:
+
+```text
+Droste v1.1.3 turns the project into a more discoverable MCP and agent-skill package.
+
+Highlights:
+- Added MCP Registry ownership metadata in the README/PyPI description.
+- Added server.json for official MCP Registry publishing.
+- Added a manual GitHub Actions workflow to publish Droste to the MCP Registry.
+- Added a scheduled Growth Radar workflow to monitor GitHub, PyPI and MCP Registry visibility.
+- Added public Codex and Claude skill templates so agents can learn Droste's safe indexing and context workflow.
+
+Install or upgrade:
+
+python -m pip install --upgrade droste-memory
+
+MCP server:
+
+droste mcp
+
+Server name:
+
+io.github.lorismascio17/droste-memory
+```
 
 ## GitHub Release Notes: v1.1.1
 
@@ -157,4 +190,3 @@ python
   speak.
 - Ask for specific feedback: MCP config, retrieval quality, ranking, visualizer,
   installation issues.
-
