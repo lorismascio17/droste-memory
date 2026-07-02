@@ -15,7 +15,7 @@ agent the *causal* slice of code it actually needs — not just keyword matches.
 [![PyPI](https://img.shields.io/pypi/v/droste-memory.svg?cacheSeconds=300)](https://pypi.org/project/droste-memory/)
 [![Python](https://img.shields.io/pypi/pyversions/droste-memory.svg)](https://pypi.org/project/droste-memory/)
 [![CI](https://github.com/lorismascio17/droste-memory/actions/workflows/ci.yml/badge.svg)](https://github.com/lorismascio17/droste-memory/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/github/license/lorismascio17/droste-memory.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ![Droste fractal code galaxy](docs/assets/hero.gif)
 
