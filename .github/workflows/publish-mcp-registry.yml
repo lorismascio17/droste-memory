@@ -39,4 +39,19 @@ jobs:
 
       - name: Publish to MCP Registry
         if: steps.release_alignment.outputs.aligned == 'true'
-        run: ./mcp-publisher publish
+        run: |
+          # Idempotent: the daily cron re-runs even when nothing changed, and
+          # the registry rejects a version it already has. Treat that specific
+          # "duplicate version" 400 as a no-op success, so only a genuinely new
+          # release publishes and real errors still fail the job.
+          set +e
+          output="$(./mcp-publisher publish 2>&1)"
+          status=$?
+          echo "$output"
+          if [ "$status" -ne 0 ]; then
+            if echo "$output" | grep -qi "duplicate version"; then
+              echo "Version already present in the MCP Registry — nothing to publish."
+              exit 0
+            fi
+            exit "$status"
+          fi
