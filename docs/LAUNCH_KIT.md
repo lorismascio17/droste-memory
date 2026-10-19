@@ -11,7 +11,7 @@ For current installation and status, use the [README](../README.md).
 - GitHub: https://github.com/lorismascio17/droste-memory
 - PyPI: https://pypi.org/project/droste-memory/
 - Install: `python -m pip install --upgrade droste-memory`
-- Latest version: `1.1.7`
+- Latest version: `1.2.0`
 - Main command: `droste`
 - MCP command: `droste mcp`
 

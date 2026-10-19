@@ -17,7 +17,7 @@ review or indexing.
 
 ## 1. Official MCP Registry
 
-Status: [v1.1.7 published](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.lorismascio17%2Fdroste-memory/versions/1.1.7).
+Status: [v1.2.0 published](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.lorismascio17%2Fdroste-memory/versions/1.2.0).
 
 Action:
 

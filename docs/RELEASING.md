@@ -8,6 +8,15 @@ The index records hashes and partial coverage, respects project ignore rules,
 preserves other roots on forced re-index, and separates embedding model caches.
 Context budgets are characters and include separators without overflow.
 
+Published on [GitHub Releases](https://github.com/lorismascio17/droste-memory/releases/tag/v1.2.0),
+[PyPI](https://pypi.org/project/droste-memory/1.2.0/) and the
+[MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.lorismascio17%2Fdroste-memory/versions/1.2.0).
+The [publication workflow](https://github.com/lorismascio17/droste-memory/actions/runs/39256891103)
+repeated the CI checks before uploading; the
+[registry workflow](https://github.com/lorismascio17/droste-memory/actions/runs/39257360204)
+published after confirming version alignment. Every member of the downloaded
+PyPI wheel was compared with the GitHub CI artifact and matched.
+
 Local validation: 69 regression cases and the pinned, manually labelled
 [public source corpus](VALIDATION.md). The corpus passes 19/20 assertions;
 its dynamic-receiver miss is retained in the report rather than hidden.

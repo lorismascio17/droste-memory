@@ -19,6 +19,13 @@ against source files and project tests.
 - A local installed-wheel check also verified switching from hash mode to real
   fastembed, distinct 384-dimensional vectors and correct cache invalidation.
   This verifies operation, not semantic ranking quality.
+- A local CLI index of Droste's own source at `b6b4217` included 83 files and
+  756 symbols with no coverage cap reached. SHA-256 freshness, the two source
+  callers of `_build_dependency_links`, and a 2,446-character context under a
+  2,500-character budget were verified. This is a workflow check, not a speed test.
+- A live installed `watch` process was checked while a Python file was deleted
+  and a TypeScript file added; the reloaded graph reflected both changes and
+  reported fresh source hashes.
 
 ## Independent public source assertions
 
