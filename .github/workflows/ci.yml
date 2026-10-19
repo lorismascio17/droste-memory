@@ -34,6 +34,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+          python scripts/prepare_tokenizers.py
       - name: Test
         run: pytest -q --junitxml=.pytest-results.xml
       - name: Check manually labelled public source edges (one documented dynamic-call gap)
@@ -88,6 +89,7 @@ jobs:
         run: |
           python -m pip install dist/*.whl
           python -m pip check
+          python scripts/prepare_tokenizers.py
           python -I scripts/smoke_install.py
       - uses: actions/upload-artifact@v7
         with:

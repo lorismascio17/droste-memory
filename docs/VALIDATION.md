@@ -1,4 +1,4 @@
-# Validation and intended use — 1.2.1
+# Validation and intended use — 1.3.0
 
 Droste is an alpha tool for finding definitions, inspecting static references,
 and preparing source context. It is useful when a developer or agent needs a
@@ -7,13 +7,14 @@ against source files and project tests.
 
 ## Verified workflows
 
-- The deterministic regression suite has 72 cases, including scope/import
+- The deterministic regression suite has 105 cases, including progressive token budgets, retained views, scope/import
   resolution, ambiguous names, stored evidence, root isolation, index freshness,
   ignore rules, backend changes, deletions, renames and bounded traversal.
 - CI runs Python 3.10/3.11/3.12 on Linux and Python 3.12 on Windows.
 - A built wheel is installed outside the checkout. Its smoke test exercises
   index, status, context, check, find, references, zoom without opening an editor,
-  the HTTP viewer, and actual stdio calls to all nine packaged MCP tools.
+  the HTTP viewer, and actual stdio calls to all ten packaged MCP tools.
+  Token vocabularies are prepared once before the offline smoke runs.
 - Regression and installed-wheel tests use the offline hash backend. They do
   not validate the ranking quality of the real embedding model.
 - A local installed-wheel check also verified switching from hash mode to real
@@ -65,6 +66,12 @@ are fixed in 1.2.1. This is an author-run case study, not an independent agent
 benchmark or evidence that Droste beats ordinary search or competing products.
 
 ## Operational guarantees and limits
+
+The new [exploration interface](EXPLORATION.md) uses a complete-response token
+budget and three explicit levels of detail. Its receipts only acknowledge
+content retained by the client. Its precomputed Requests demo reports payload
+sizes, not model task success or API billing. The character-budget statements
+below describe the legacy `context` interface.
 
 - Python links resolve lexical scopes, imports/re-exports, aliases and explicit
   `self`/`cls` members. Unknown receiver types, dynamic dispatch, import-star and

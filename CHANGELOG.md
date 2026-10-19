@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.3.0 — 2026-10-19
+
+- Add `explore` and `droste_explore`: search a code region and navigate by ID
+  through map, structure and whole-source representations.
+- Enforce real token budgets on the complete compact response, including JSON,
+  source locations, receipts and its final newline; support `o200k_base` and
+  `cl100k_base`. Disable duplicate MCP structured output for the new tool.
+- Reuse exact source-backed representations only when the client explicitly
+  acknowledges it still retains them. Clear acknowledgements after compaction.
+- Verify source SHA-256 hashes before exploration; refuse stale snapshots and
+  detect intervening edits before using stored spans or receipt handles.
+- Expose per-item actual detail, omitted candidates and truncated links. Keep
+  ambiguous focus candidates as maps and preserve complete module structures.
+- Add 33 regression cases, CLI receipt and ten-tool MCP installed-wheel smoke,
+  and a public precomputed Requests demo with exact payloads and license.
+- Keep the legacy character-budget context API and the original galaxy viewer.
+
 ## 1.2.1 — 2026-10-19
 
 - Keep uniquely identified symbols ahead of semantic lookalikes in context,

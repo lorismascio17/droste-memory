@@ -39,7 +39,7 @@ from core.droste_engine import DEFAULT_DB_PATH, DrosteConceptEngine
 from core.droste_ingester import DrosteProjectIngester, droste_zoom_query
 
 
-VERSION = "v1.2.1-Alpha-Sharded"
+VERSION = "v1.3.0-Alpha-Sharded"
 VISUALIZER_CAMERA_URL = "http://127.0.0.1:5000/api/camera"
 
 RESET = "\033[0m"
@@ -102,6 +102,7 @@ def print_splash(color: bool | None = None) -> None:
     print("  droste watch <path>")
     print("  droste zoom <symbol_name>")
     print("  droste context [query] --budget 1500")
+    print("  droste explore [query] --tokens 2000 --level map|structure|source")
     print("  droste mcp")
     print()
     print(_paint("Fast path: droste context hub_core --budget 1000 | clip", DIM, enabled))
@@ -260,6 +261,38 @@ def command_context(args: argparse.Namespace) -> int:
         print("WARNING: " + warning, file=sys.stderr)
     print(result.get("compiled_context", ""))
     return 0
+
+
+def command_explore(args: argparse.Namespace) -> int:
+    from core.exploration import ENCODINGS, explore, tokenizer
+    if args.prepare_tokenizers:
+        for name in ENCODINGS:
+            tokenizer(name)
+            print("Token vocabulary ready: " + name)
+        return 0
+    seen = None
+    if args.seen:
+        receipt = json.loads(args.seen.read_text(encoding="utf-8-sig"))
+        if not isinstance(receipt, dict) or receipt.get("v") != 1:
+            raise ValueError("Unsupported receipt file")
+        seen = receipt.get("handles")
+        if not isinstance(seen, list):
+            raise ValueError("Receipt file must contain a handles list")
+    text = explore(_engine(args.db), args.query, tokens=args.tokens, level=args.level,
+                   focus=args.focus, root=args.root, encoding=args.encoding, seen=seen)
+    result = json.loads(text)
+    if args.save_receipt:
+        # Accumulate acknowledgements only at the caller's explicit request.
+        handles = set(seen or [])
+        handles.update(item["handle"] for key in ("items", "reused") for item in result[key])
+        if len(handles) > 1000:
+            raise ValueError("Receipt would exceed 1000 handles; start a new receipt")
+        args.save_receipt.parent.mkdir(parents=True, exist_ok=True)
+        args.save_receipt.write_text(json.dumps({"v": 1, "handles": sorted(handles)}, separators=(",", ":")) + "\n", encoding="utf-8")
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(newline="\n")
+    sys.stdout.write(text)
+    return 0 if result["status"] == "ok" else 1
 
 
 def command_inspect(args: argparse.Namespace) -> int:
@@ -467,6 +500,18 @@ def build_parser() -> argparse.ArgumentParser:
     context.add_argument("--root", default=None, help="Limit retrieval to one indexed root.")
     context.add_argument("--json", action="store_true", help="Emit full context payload JSON.")
     context.set_defaults(func=command_context)
+
+    explore = sub.add_parser("explore", help="Search and zoom within an exact token budget for the complete response.")
+    explore.add_argument("query", nargs="?", default="project")
+    explore.add_argument("--tokens", type=int, default=2000, help="Complete response budget, 256..64000 tokens.")
+    explore.add_argument("--level", choices=["map", "structure", "source"], default="map")
+    explore.add_argument("--focus", default=None, help="Navigate to an exact node ID or unique qualified symbol.")
+    explore.add_argument("--root", default=None)
+    explore.add_argument("--encoding", choices=["o200k_base", "cl100k_base"], default="o200k_base")
+    explore.add_argument("--seen", type=Path, help="Receipts for content STILL retained in the client context.")
+    explore.add_argument("--save-receipt", type=Path, help="Write/extend a receipt locally; clear it after compaction.")
+    explore.add_argument("--prepare-tokenizers", action="store_true", help="Download the two vocabularies once for offline use.")
+    explore.set_defaults(func=command_explore)
 
     for name, help_text in [("check", "Verify index hashes, freshness and coverage."),
                             ("find", "Find symbols with index IDs and source lines."),

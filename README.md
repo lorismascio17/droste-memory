@@ -4,25 +4,26 @@
 
 <!-- mcp-name: io.github.lorismascio17/droste-memory -->
 
-### Explore your codebase and give agents source-backed context.
+### An expanding code space. A fixed token window.
 
-Droste indexes source files into a local symbol graph and a zoomable map.
-Find definitions, inspect static callers and callees, check whether the index
-is fresh, and compile selected code into a bounded context for an AI agent.
+Search your local code graph, then zoom from a map to structure and source.
+The new `explore` interface keeps its entire response inside a measured token
+budget, including metadata, and reuses unchanged views the client still retains.
+Find definitions, inspect static references and verify source freshness.
 
-**Local-first · zero-config · polyglot · MCP-native**
+**Local-first · progressive zoom · measured tokens · CLI + MCP**
 
 [![PyPI](https://img.shields.io/pypi/v/droste-memory.svg?cacheSeconds=300)](https://pypi.org/project/droste-memory/)
 [![Python](https://img.shields.io/pypi/pyversions/droste-memory.svg)](https://pypi.org/project/droste-memory/)
 [![CI](https://github.com/lorismascio17/droste-memory/actions/workflows/ci.yml/badge.svg)](https://github.com/lorismascio17/droste-memory/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-![Droste fractal code galaxy](docs/assets/hero.gif)
+[![Droste token zoom on real Requests source](docs/assets/explore-preview.png)](https://lorismascio17.github.io/droste-memory/explore.html)
 
-*Explore the indexed file and symbol relationships.
-[Full flythrough (FastAPI)](docs/assets/demo.mp4)*
+*Explore the recorded token zoom demo, including exact payloads.
+[Original galaxy flythrough (FastAPI)](docs/assets/demo.mp4)*
 
-[Live demo](https://lorismascio17.github.io/droste-memory/) ? [Quickstart](#quickstart) · [Why it's different](#why-its-different) · [How it works](#how-it-works) · [MCP](#use-it-as-an-mcp-server) · [Benchmarks](#benchmarks)
+[Token zoom demo](https://lorismascio17.github.io/droste-memory/explore.html) · [Code galaxy](https://lorismascio17.github.io/droste-memory/cockpit.html?web=1) · [Quickstart](#quickstart) · [Exploration](docs/EXPLORATION.md) · [MCP](#use-it-as-an-mcp-server)
 
 </div>
 
@@ -30,7 +31,7 @@ is fresh, and compile selected code into a bounded context for an AI agent.
 
 ## Quickstart
 
-Install **v1.2.1** from [PyPI](https://pypi.org/project/droste-memory/)
+Install **v1.3.0** from [PyPI](https://pypi.org/project/droste-memory/)
 or [GitHub Releases](https://github.com/lorismascio17/droste-memory/releases).
 See [release status](docs/RELEASING.md).
 
@@ -52,8 +53,16 @@ individual functions and their indexed relationships.
 Need it for an agent instead of your eyes?
 
 ```bash
-droste context "checkout flow" --budget 1500
+droste explore "checkout flow" --tokens 1500
 ```
+
+Use returned node IDs as `--focus` and choose `--level map`, `structure` or
+`source` to navigate the same region at different detail. `used` measures the
+complete compact response under the selected tokenizer. Source bodies downgrade
+explicitly when they cannot fit. Prepare the small token vocabularies once with
+`droste explore --prepare-tokenizers` for later offline use. See
+[the workflow, receipts and measured limits](docs/EXPLORATION.md).
+The older `droste context --budget` interface still budgets characters.
 
 For everyday code investigation:
 
@@ -103,7 +112,7 @@ Running `droste` with no arguments prints the command palette:
                   '-----------------------'
 
 DROSTE-MEMORY // RIGID FRACTAL RADIAL LAYOUT
-Local Graph Engine v1.2.1-Alpha-Sharded
+Local Graph Engine v1.3.0-Alpha-Sharded
 
 Commands
   droste index <path> [--reset]
@@ -358,10 +367,19 @@ cross-process shard race). `eval/` = performance/quality benchmarks.
 
 ## Status
 
-**v1.2.1 (alpha).** Tested CLI/MCP workflows, source freshness checks and an
+**v1.3.0 (alpha).** Progressive token-budget exploration, tested CLI/MCP workflows, source freshness checks and an
 explicitly limited static graph. Dynamic dispatch, receiver-type inference and
 complete cross-language resolution remain outside the current guarantees.
 Use one writer per database. See [validation and limitations](docs/VALIDATION.md).
+
+### What's new in v1.3.0
+
+- Search and zoom `map → structure → source` with `droste explore` and `droste_explore`.
+- Bound the complete response with real `o200k_base` / `cl100k_base` token counts.
+- Reuse exact unchanged views only when the client acknowledges it still retains them.
+- Verify source hashes before navigation and expose downgraded detail and omissions.
+- Add a [recorded interactive demo](https://lorismascio17.github.io/droste-memory/explore.html),
+  exact public responses and installed-wheel checks of the tenth MCP tool.
 
 ### What's new in v1.2.1
 

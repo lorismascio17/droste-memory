@@ -41,6 +41,16 @@ def main() -> None:
         refs = json.loads(run("references", "double", "--json"))
         assert refs["references"][0]["from"]["name"] == "calculate"
         assert refs["references"][0]["evidence"][0]["line"] == 5
+        import tiktoken
+        encoder = tiktoken.get_encoding("o200k_base")
+        receipt = work / "retained.json"
+        exploration = run("explore", "--focus", "calculate", "--level", "source", "--tokens", "512",
+                          "--save-receipt", str(receipt))
+        packet = json.loads(exploration)
+        assert packet["used"] == len(encoder.encode_ordinary(exploration)) <= 512
+        assert packet["items"][0]["level"] == "source"
+        repeated = json.loads(run("explore", "--focus", "calculate", "--level", "source", "--tokens", "512", "--seen", str(receipt)))
+        assert repeated["reused"]
         run("zoom", "calculate", "--no-open", "--no-visualizer")
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))
@@ -76,11 +86,12 @@ def main() -> None:
                     await session.initialize()
                     tools = await session.list_tools()
                     expected = {"droste_index_project", "droste_get_context", "droste_status", "droste_find_symbols",
-                                "droste_references", "droste_check_index", "inject_concept", "move_camera_and_zoom", "get_space_status"}
+                                "droste_references", "droste_check_index", "droste_explore", "inject_concept", "move_camera_and_zoom", "get_space_status"}
                     assert expected <= {tool.name for tool in tools.tools}
                     for name, arguments, needle in [
                         ("droste_index_project", {"path": str(project)}, "indexed"),
                         ("droste_get_context", {"query": "calculate"}, "calculate"),
+                        ("droste_explore", {"focus": "calculate", "level": "source", "tokens": 512}, "calculate"),
                         ("droste_status", {}, "node_count"),
                         ("droste_check_index", {}, "fresh"),
                         ("droste_find_symbols", {"query": "double"}, "double"),
@@ -92,8 +103,13 @@ def main() -> None:
                         result = await session.call_tool(name, arguments)
                         assert not result.isError, (name, result)
                         assert needle in str(result), (name, result)
+                        if name == "droste_explore":
+                            assert len(result.content) == 1 and result.structuredContent is None, result
+                            text = result.content[0].text
+                            packet = json.loads(text)
+                            assert packet["used"] == len(encoder.encode_ordinary(text)) <= 512
         asyncio.run(asyncio.wait_for(mcp_check(), timeout=45))
-    print("Installed wheel smoke passed: index, status, context, check, find, references, zoom, HTTP viewer and all nine MCP tools")
+    print("Installed wheel smoke passed: index, status, context, explore/receipts, check, find, references, zoom, HTTP viewer and all ten MCP tools")
 
 
 if __name__ == "__main__":

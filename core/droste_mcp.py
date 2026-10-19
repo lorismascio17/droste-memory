@@ -121,6 +121,15 @@ def create_mcp_server(db_path: str | Path | None = None) -> Any:
 
         return get_context(query, engine=engine, budget=budget, root=root)
 
+    @mcp.tool(structured_output=False)
+    def droste_explore(query: str = "project", tokens: int = 2000, level: str = "map",
+                       focus: str | None = None, root: str | None = None,
+                       encoding: str = "o200k_base", seen: list[str] | None = None) -> str:
+        """Search, then zoom map -> structure -> source using returned node IDs as focus. Returns ONE compact JSON text block, <= tokens (256..64000) including metadata under the chosen encoding; protocol/model wrappers are excluded. Per-item level may be lower if source cannot fit. Pass seen handles ONLY for content you still retain; clear them after compaction. Source hashes are verified; stale indexes require re-indexing. Static links can miss dynamic calls."""
+        from .exploration import explore
+        return explore(engine, query, tokens=tokens, level=level, focus=focus, root=root,
+                       encoding=encoding, seen=seen)
+
     @mcp.tool()
     def droste_status(root: str | None = None) -> dict[str, Any]:
         """Return concise local graph and shard health."""

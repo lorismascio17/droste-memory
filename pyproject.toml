@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "droste-memory"
-version = "1.2.1"
+version = "1.3.0"
 readme = "README.md"
-description = "Local hybrid structural and semantic graph memory engine."
+description = "Explore local code graphs with progressive zoom and complete-response token budgets."
 license = "MIT"
 keywords = [
     "ai-agents",
@@ -51,6 +51,7 @@ dependencies = [
     "tree-sitter>=0.23.0",
     "tree-sitter-language-pack>=1.9.0",
     "pathspec>=0.12,<2",
+    "tiktoken>=0.14,<1",
 ]
 
 [project.optional-dependencies]
