@@ -20,6 +20,9 @@ was no competing-agent run, randomized task assignment or task-time comparison.
   JSON metadata is additional. Each CLI call started a separate Python process.
 - Exact queries, selected symbols, body-line observations and timings are in
   [the portable observation record](practical-review-2026-10-19.json).
+- A subsequent run repeated all queries through the installed 1.2.1 wheel on
+  a fresh index with real fastembed and the same focus results. The record
+  includes this check, its local wheel checksum and its index time (66 seconds).
 
 ## What happened
 

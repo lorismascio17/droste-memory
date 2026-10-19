@@ -2206,5 +2206,58 @@
       "characters": 1943,
       "output": "src/requests\\sessions.py:50:    should_bypass_proxies,\nsrc/requests\\sessions.py:305:        NO_PROXY, we strip the proxy configuration. Otherwise, we set missing\nsrc/requests\\sessions.py:759:            no_proxy = proxies.get(\"no_proxy\") if proxies is not None else None\nsrc/requests\\sessions.py:760:            env_proxies = get_environ_proxies(url, no_proxy=no_proxy)\nsrc/requests\\utils.py:711:    Very simple check of the cidr format in no_proxy variable.\nsrc/requests\\utils.py:755:def should_bypass_proxies(url, no_proxy):\nsrc/requests\\utils.py:767:    # First check whether no_proxy is defined. If it is, check that the URL\nsrc/requests\\utils.py:768:    # we're getting isn't in the no_proxy list.\nsrc/requests\\utils.py:769:    no_proxy_arg = no_proxy\nsrc/requests\\utils.py:770:    if no_proxy is None:\nsrc/requests\\utils.py:771:        no_proxy = get_proxy(\"no_proxy\")\nsrc/requests\\utils.py:778:    if no_proxy:\nsrc/requests\\utils.py:781:        no_proxy = (host for host in no_proxy.replace(\" \", \"\").split(\",\") if host)\nsrc/requests\\utils.py:784:            for proxy_ip in no_proxy:\nsrc/requests\\utils.py:789:                    # If no_proxy ip was defined in plain IP notation instead of cidr notation &\nsrc/requests\\utils.py:797:            for host in no_proxy:\nsrc/requests\\utils.py:799:                    # The URL does match something in no_proxy, so we don't want\nsrc/requests\\utils.py:803:    with set_environ(\"no_proxy\", no_proxy_arg):\nsrc/requests\\utils.py:816:def get_environ_proxies(url, no_proxy=None):\nsrc/requests\\utils.py:822:    if should_bypass_proxies(url, no_proxy=no_proxy):\nsrc/requests\\utils.py:857:    such as NO_PROXY to strip proxy configurations.\nsrc/requests\\utils.py:868:    no_proxy = proxies.get(\"no_proxy\")\nsrc/requests\\utils.py:871:    if trust_env and not should_bypass_proxies(url, no_proxy=no_proxy):\nsrc/requests\\utils.py:872:        environ_proxies = get_environ_proxies(url, no_proxy=no_proxy)\n"
     }
-  ]
+  ],
+  "installed_wheel_recheck": {
+    "version": "1.2.1",
+    "archive_sha256": "1cf78dc00bd661c551eacf922d8bb0a4a2aa95435e8333366b77a6ccee188908",
+    "wheel_sha256": "3c817764615e978cedda2fd16afd8a0571eafc8a5c28e0a0da414be2323c8e6b",
+    "index_seconds_including_startup": 65.982,
+    "embedding_model": "fastembed:BAAI/bge-small-en-v1.5",
+    "partial": false,
+    "freshness": "fresh",
+    "contexts": [
+      {
+        "id": "redirect-en",
+        "focus": "function: test_auth_is_retained_for_redirect_on_host",
+        "used_characters": 5986,
+        "seconds_including_startup": 5.997
+      },
+      {
+        "id": "timeout-en",
+        "focus": "class: ConnectTimeout",
+        "used_characters": 5907,
+        "seconds_including_startup": 5.352
+      },
+      {
+        "id": "proxy-en",
+        "focus": "function: test_should_bypass_proxies_no_proxy",
+        "used_characters": 5909,
+        "seconds_including_startup": 5.017
+      },
+      {
+        "id": "redirect-it",
+        "focus": "function: host",
+        "used_characters": 5911,
+        "seconds_including_startup": 4.763
+      },
+      {
+        "id": "redirect-symbol",
+        "focus": "function: rebuild_auth",
+        "used_characters": 5925,
+        "seconds_including_startup": 4.846
+      },
+      {
+        "id": "timeout-symbol",
+        "focus": "function: send",
+        "used_characters": 5989,
+        "seconds_including_startup": 4.799
+      },
+      {
+        "id": "proxy-symbol",
+        "focus": "function: should_bypass_proxies",
+        "used_characters": 5918,
+        "seconds_including_startup": 4.767
+      }
+    ]
+  }
 }

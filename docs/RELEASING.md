@@ -1,5 +1,29 @@
 # Release status and verification
 
+## 1.2.1 — 19 October 2026
+
+Fixes explicit-symbol context priority and sliced neighbor source locations,
+and describes syntax dependencies without presenting inheritance as calls.
+The [practical Requests review](PRACTICAL_REVIEW.md) records both the useful
+symbol workflows and the open-ended retrieval and dynamic-trace failures.
+
+Published on [GitHub Releases](https://github.com/lorismascio17/droste-memory/releases/tag/v1.2.1),
+[PyPI](https://pypi.org/project/droste-memory/1.2.1/) and the
+[MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.lorismascio17%2Fdroste-memory/versions/1.2.1).
+The [release CI](https://github.com/lorismascio17/droste-memory/actions/runs/39266832483)
+passes 72 cases across Linux Python 3.10/3.11/3.12 and Windows Python 3.12,
+package checks, and installed-wheel CLI/HTTP/nine-tool MCP smoke tests.
+The [PyPI workflow](https://github.com/lorismascio17/droste-memory/actions/runs/39266907646)
+repeated these checks before publishing; the
+[registry workflow](https://github.com/lorismascio17/droste-memory/actions/runs/39267325623)
+then published the aligned version. Every member of the downloaded PyPI wheel
+matches the GitHub CI distribution. A separate local installed-wheel run used
+real fastembed on all practical queries; the PyPI-installed global CLI also
+retrieved the requested timeout implementation in full.
+
+No re-index is needed specifically for these context-rendering and ranking fixes.
+The 1.2.0 migration guidance below still applies to older index formats.
+
 ## 1.2.0 — 19 October 2026
 
 Adds scope/import-aware Python links, source evidence, `find`, `references`,
