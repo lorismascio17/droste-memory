@@ -7,27 +7,29 @@ includes 41 regression tests on Linux (Python 3.10, 3.11, 3.12) and Windows
 (Python 3.12), wheel-content checks, and an installed-wheel smoke test covering
 index, status, context, the HTTP viewer, MCP initialization and a tool call.
 
-PyPI publication was attempted after those checks and rejected with
-`invalid-publisher`: no Trusted Publisher matched the workflow identity.
-PyPI and the MCP Registry therefore remain at 1.1.6. The README installs the
-fixed GitHub wheel directly; this should not be confused with a PyPI release.
+After the PyPI Trusted Publisher was configured, the
+[Publish PyPI workflow](https://github.com/lorismascio17/droste-memory/actions/runs/39250479711)
+passed all checks and published the 1.1.7 wheel and source archive to
+[PyPI](https://pypi.org/project/droste-memory/1.1.7/). The
+[Publish MCP Registry workflow](https://github.com/lorismascio17/droste-memory/actions/runs/39250932125)
+then published [version 1.1.7](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.lorismascio17%2Fdroste-memory/versions/1.1.7).
 
 ## PyPI publication configuration
 
 The `Publish PyPI` workflow uses short-lived OIDC credentials, not a stored API
-token. The PyPI project owner can register the following identity on the
-project's Publishing page:
+token. The PyPI project has this Trusted Publisher identity:
 
 - Owner: `lorismascio17`
 - Repository: `droste-memory`
 - Workflow filename: `publish-pypi.yml`
 - Environment: `pypi`
 
-See [PyPI's official instructions](https://docs.pypi.org/trusted-publishers/adding-a-publisher/).
-After configuration, dispatch `Publish PyPI` at the intended release ref. It
+For future releases, dispatch `Publish PyPI` at the intended release ref. It
 runs the complete CI workflow and publishes only the verified distributions.
 Then run `Publish MCP Registry`; its alignment guard prevents announcing a
-version that is not available on PyPI.
+version that is not available on PyPI. See
+[PyPI's official instructions](https://docs.pypi.org/trusted-publishers/adding-a-publisher/)
+if the repository or workflow identity changes.
 
 ## Ongoing checks
 

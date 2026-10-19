@@ -3,12 +3,15 @@
 This file is a practical launch checklist and copy bank for public posts. Keep
 the tone technical: ask for feedback, not stars.
 
+The v1.1.6 release notes and launch order below are historical templates.
+For current installation and status, use the [README](../README.md).
+
 ## Current Public State
 
 - GitHub: https://github.com/lorismascio17/droste-memory
 - PyPI: https://pypi.org/project/droste-memory/
 - Install: `python -m pip install --upgrade droste-memory`
-- Latest version: `1.1.6`
+- Latest version: `1.1.7`
 - Main command: `droste`
 - MCP command: `droste mcp`
 
@@ -209,7 +212,7 @@ code-intelligence
 python
 ```
 
-## Launch Order
+## Historical v1.1.6 Launch Order
 
 1. Create the GitHub Release for `v1.1.6` using the release notes above.
 2. Confirm PyPI shows version `1.1.6`.

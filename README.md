@@ -30,17 +30,16 @@ edge. [Full flythrough (FastAPI)](docs/assets/demo.mp4)*
 
 ## Quickstart
 
-The fixed **v1.1.7** wheel is available from [GitHub Releases](https://github.com/lorismascio17/droste-memory/releases/tag/v1.1.7).
-PyPI and the MCP Registry still list v1.1.6: the new PyPI upload is blocked by
-missing Trusted Publisher configuration. The commands below install the fixed
-GitHub release directly. See [release status](docs/RELEASING.md).
+The fixed **v1.1.7** release is available on [PyPI](https://pypi.org/project/droste-memory/1.1.7/)
+and [GitHub Releases](https://github.com/lorismascio17/droste-memory/releases/tag/v1.1.7/).
+See [release status](docs/RELEASING.md).
 
 ```bash
 # Windows
-python -m pip install --upgrade https://github.com/lorismascio17/droste-memory/releases/download/v1.1.7/droste_memory-1.1.7-py3-none-any.whl
+python -m pip install --upgrade droste-memory
 
 # macOS / Linux
-python3 -m pip install --upgrade https://github.com/lorismascio17/droste-memory/releases/download/v1.1.7/droste_memory-1.1.7-py3-none-any.whl
+python3 -m pip install --upgrade droste-memory
 
 droste index . # index the current repo
 droste view    # open the fractal galaxy in your browser
@@ -170,14 +169,14 @@ is deterministic but does not provide semantic similarity.
 
 Droste is a drop-in MCP server — an AI agent can call it as primary code memory instead of doing blind file reads. Add this to your client configuration file (e.g., Cursor, Claude Desktop, or Codex):
 
-First install or upgrade to the fixed GitHub release:
+First install or upgrade to the current PyPI release:
 
 ```bash
 # Windows
-python -m pip install --upgrade https://github.com/lorismascio17/droste-memory/releases/download/v1.1.7/droste_memory-1.1.7-py3-none-any.whl
+python -m pip install --upgrade droste-memory
 
 # macOS / Linux
-python3 -m pip install --upgrade https://github.com/lorismascio17/droste-memory/releases/download/v1.1.7/droste_memory-1.1.7-py3-none-any.whl
+python3 -m pip install --upgrade droste-memory
 
 droste mcp --help
 ```
