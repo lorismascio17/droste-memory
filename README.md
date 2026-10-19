@@ -322,6 +322,7 @@ maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
 ### What's new in v1.1.7
 
 - Restored fresh-install MCP startup by requiring the compatible 1.x SDK.
+- Restored polyglot syntax edges with the current tree-sitter Python API.
 - Fixed `droste --db ... view` to visualize the requested database.
 - Viewer snapshots use temporary storage, including with read-only installations.
 - Isolated shards, registries and embedding caches for databases sharing a folder.

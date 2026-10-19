@@ -13,11 +13,8 @@ regex was noisy (strings/comments) and missed call-chains.
 Import is guarded: if tree-sitter is unavailable the ingester silently falls
 back to the regex registry, so the zero-config boot never breaks.
 
-NOTE: tree-sitter-language-pack ships a NON-standard method-based binding
-(verified live): ``parser.parse(str)`` (wants str, not bytes); ``tree.root_node()``
-is a METHOD; on a Node everything is a method — ``kind()``, ``child_count()``,
-``child(i)``, ``child_by_field_name(name)``, ``start_byte()``, ``end_byte()``,
-``parent()``. There is no ``.type``/``.children``/``.text``.
+Supports both the older method-based language-pack binding and the standard
+tree-sitter Python binding (bytes input, property-based nodes).
 """
 from __future__ import annotations
 
@@ -176,6 +173,36 @@ def _kids(node) -> list:
     return [node.child(i) for i in range(node.child_count())]
 
 
+class _PropertyNode:
+    """Adapt standard tree-sitter nodes to the extractor's method interface."""
+    def __init__(self, node):
+        self.node = node
+
+    def kind(self):
+        return self.node.type
+
+    def child_count(self):
+        return self.node.child_count
+
+    def child(self, index):
+        node = self.node.child(index)
+        return _PropertyNode(node) if node is not None else None
+
+    def child_by_field_name(self, name):
+        node = self.node.child_by_field_name(name)
+        return _PropertyNode(node) if node is not None else None
+
+    def start_byte(self):
+        return self.node.start_byte
+
+    def end_byte(self):
+        return self.node.end_byte
+
+    def parent(self):
+        node = self.node.parent
+        return _PropertyNode(node) if node is not None else None
+
+
 def extract_symbols(text: str, ext: str) -> list[dict[str, Any]] | None:
     """Return symbol dicts (kind, name, line_start, line_end, references,
     ts_based=True) for a supported language, or None to fall back to regex."""
@@ -183,7 +210,12 @@ def extract_symbols(text: str, ext: str) -> list[dict[str, Any]] | None:
         return None
     lang = TS_LANG_BY_EXT[ext.lower()]
     try:
-        root = _parser(lang).parse(text).root_node()
+        parser = _parser(lang)
+        try:
+            tree = parser.parse(text.encode("utf-8"))
+        except TypeError:
+            tree = parser.parse(text)
+        root = tree.root_node() if callable(tree.root_node) else _PropertyNode(tree.root_node)
     except Exception:
         return None
 

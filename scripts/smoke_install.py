@@ -32,6 +32,7 @@ def main() -> None:
         run("index", str(project), "--reset")
         status = json.loads(run("status", "--json"))
         assert status["node_count"] >= 4, status
+        assert status["shard_count"] > 0, status
         context = json.loads(run("context", "calculate", "--budget", "1000", "--json"))
         assert "calculate" in json.dumps(context)
         with socket.socket() as sock:
