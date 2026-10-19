@@ -1,4 +1,4 @@
-# Validation and intended use — 1.2.0
+# Validation and intended use — 1.2.1
 
 Droste is an alpha tool for finding definitions, inspecting static references,
 and preparing source context. It is useful when a developer or agent needs a
@@ -7,7 +7,7 @@ against source files and project tests.
 
 ## Verified workflows
 
-- The deterministic regression suite has 69 cases, including scope/import
+- The deterministic regression suite has 72 cases, including scope/import
   resolution, ambiguous names, stored evidence, root isolation, index freshness,
   ignore rules, backend changes, deletions, renames and bounded traversal.
 - CI runs Python 3.10/3.11/3.12 on Linux and Python 3.12 on Windows.
@@ -51,6 +51,18 @@ These are selected edge assertions on three files, not exhaustive precision or
 recall for the projects. They do not measure semantic search, agent task success,
 runtime performance, or superiority over Serena, GitNexus or other products.
 The older self-supervised graph-neighbor evaluation remains a retrieval diagnostic.
+
+## Practical use on Requests
+
+[The practical review](PRACTICAL_REVIEW.md) records real CLI investigations of
+redirect authentication, timeout conversion and environment proxies on the full
+pinned Requests repository. Exact-symbol navigation helped inspect the relevant
+functions and their references. Open-ended English queries often returned tests
+or broad contracts; the Italian query missed the relevant function. These
+retrieval weaknesses remain, as does the incomplete dynamic request trace.
+Two issues found during this review (symbol priority and sliced source locators)
+are fixed in 1.2.1. This is an author-run case study, not an independent agent
+benchmark or evidence that Droste beats ordinary search or competing products.
 
 ## Operational guarantees and limits
 

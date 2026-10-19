@@ -255,3 +255,34 @@ def test_import_prefers_implementation_over_same_module_stub(ingester, engine, t
         "main.py": "from pkg.helper import helper\n\ndef run():\n    return helper()\n"})
     ingester.index_project(root)
     assert edges(engine, root) == {("main.py", 3, "src/pkg/helper.py", 1)}
+
+
+def test_context_pins_an_explicit_unique_symbol_before_semantic_lookalikes(ingester, engine, tmp_path):
+    root = project(tmp_path, {"service.py": "class Service:\n    def deliver(self, timeout=None):\n        return timeout\n\nclass Timeout:\n    '''A timeout error while sending.'''\n    pass\n"})
+    ingester.index_project(root)
+    target = find_symbols(engine, "Service.deliver")["matches"][0]
+    for query in ("Service.deliver timeout", target["id"]):
+        result = ingester.get_context(query, budget=2500)
+        assert result["selected_nodes"][0]["node"]["id"] == target["id"]
+        assert "return timeout" in result["compiled_context"]
+
+
+def test_context_does_not_pin_ambiguous_or_partial_qualified_names(ingester, engine, tmp_path):
+    root = project(tmp_path, {"a.py": "class Service:\n    def deliver(self): pass\n",
+                              "b.py": "class Service:\n    def deliver(self): pass\n"})
+    ingester.index_project(root)
+    for query in ("deliver", "Service.deliver", "Other.Service.deliver"):
+        assert not any(m["explicit_symbol"] for m in ingester.search_nodes(query))
+
+
+def test_compact_neighbor_context_never_slices_source_locations(ingester, engine, tmp_path):
+    root = project(tmp_path, {"service.py": "def target():\n    return 1\n"})
+    ingester.index_project(root)
+    node = next(n for n in engine.all_nodes() if n.node_type == "symbol")
+    prefix = "### dependency from a verbose origin " + "x" * 300
+    stub = ingester._caller_stub(node, prefix)
+    assert stub
+    assert f"source: {node.source_path}:1-2\n" in stub
+    assert stub.endswith("[Body omitted.]")
+    node.source_path = str(root / ("long_segment_" * 30) / "service.py")
+    assert ingester._caller_stub(node, prefix) == ""

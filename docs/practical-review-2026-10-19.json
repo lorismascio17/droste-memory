@@ -1,0 +1,2210 @@
+{
+  "date": "2026-10-19",
+  "scope": "Author-run practical navigation case study; not an independent agent benchmark. Body-line presence is an observation, not a task-success score.",
+  "repository": "psf/requests",
+  "commit": "b25c87d7cb8d6a18a37fa12442b5f883f9e41741",
+  "embedding_model": "fastembed:BAAI/bge-small-en-v1.5",
+  "budget_characters": 6000,
+  "indexed_files": 65,
+  "indexed_symbols": 778,
+  "syntax_dependencies": 708,
+  "phases": [
+    {
+      "interface": "installed-1.2.0",
+      "contexts": [
+        {
+          "id": "redirect-en",
+          "query": "Where is the Authorization header removed when a redirect changes the host?",
+          "seconds_including_startup": 5.342,
+          "used_characters": 5903,
+          "stdout_characters": 13522,
+          "observed_body_line": "del headers[\"Authorization\"]",
+          "body_line_present": false,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "function: test_auth_is_retained_for_redirect_on_host",
+              "path": "tests/test_requests.py",
+              "line_start": 1894,
+              "line_end": 1899,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: get",
+              "path": "src/requests/api.py",
+              "line_start": 62,
+              "line_end": 73,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: Session",
+              "path": "src/requests/sessions.py",
+              "line_start": 356,
+              "line_end": 816,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: SessionRedirectMixin",
+              "path": "src/requests/sessions.py",
+              "line_start": 106,
+              "line_end": 353,
+              "detail_level": "stub"
+            },
+            {
+              "title": "function: resolve_redirects",
+              "path": "src/requests/sessions.py",
+              "line_start": 159,
+              "line_end": 280,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_digestauth_401_count_reset_on_redirect",
+              "path": "tests/test_lowlevel.py",
+              "line_start": 127,
+              "line_end": 189,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: getheaders",
+              "path": "src/requests/cookies.py",
+              "line_start": 120,
+              "line_end": 121,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: is_permanent_redirect",
+              "path": "src/requests/models.py",
+              "line_start": 777,
+              "line_end": 782,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: Request",
+              "path": "src/requests/models.py",
+              "line_start": 230,
+              "line_end": 310,
+              "detail_level": "stub"
+            }
+          ]
+        },
+        {
+          "id": "timeout-en",
+          "query": "Where is the connect and read timeout tuple handled before sending an HTTP request?",
+          "seconds_including_startup": 4.356,
+          "used_characters": 5993,
+          "stdout_characters": 13948,
+          "observed_body_line": "connect, read = timeout",
+          "body_line_present": false,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "class: ConnectTimeout",
+              "path": "src/requests/exceptions.py",
+              "line_start": 80,
+              "line_end": 84,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: ConnectionError",
+              "path": "src/requests/exceptions.py",
+              "line_start": 59,
+              "line_end": 60,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: Timeout",
+              "path": "src/requests/exceptions.py",
+              "line_start": 71,
+              "line_end": 77,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: send",
+              "path": "src/requests/adapters.py",
+              "line_start": 590,
+              "line_end": 696,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: digest_failed_response_handler",
+              "path": "tests/test_lowlevel.py",
+              "line_start": 208,
+              "line_end": 224,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: TestTimeout",
+              "path": "tests/test_requests.py",
+              "line_start": 2483,
+              "line_end": 2549,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: merge_environment_settings",
+              "path": "src/requests/sessions.py",
+              "line_start": 750,
+              "line_end": 779,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: request",
+              "path": "src/requests/sessions.py",
+              "line_start": 500,
+              "line_end": 591,
+              "detail_level": "stub"
+            },
+            {
+              "title": "function: send",
+              "path": "src/requests/sessions.py",
+              "line_start": 673,
+              "line_end": 748,
+              "detail_level": "stub"
+            }
+          ]
+        },
+        {
+          "id": "proxy-en",
+          "query": "How does NO_PROXY bypass environment proxy configuration?",
+          "seconds_including_startup": 5.165,
+          "used_characters": 5942,
+          "stdout_characters": 16536,
+          "observed_body_line": "no_proxy = get_proxy(\"no_proxy\")",
+          "body_line_present": false,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "function: test_should_bypass_proxies_no_proxy",
+              "path": "tests/test_utils.py",
+              "line_start": 825,
+              "line_end": 831,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: should_bypass_proxies",
+              "path": "src/requests/utils.py",
+              "line_start": 755,
+              "line_end": 813,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: merge_setting",
+              "path": "src/requests/sessions.py",
+              "line_start": 61,
+              "line_end": 88,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: request",
+              "path": "src/requests/sessions.py",
+              "line_start": 500,
+              "line_end": 591,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: HTTPAdapter",
+              "path": "src/requests/adapters.py",
+              "line_start": 143,
+              "line_end": 696,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: PreparedRequest",
+              "path": "src/requests/models.py",
+              "line_start": 313,
+              "line_end": 637,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: Session",
+              "path": "src/requests/sessions.py",
+              "line_start": 356,
+              "line_end": 816,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: get_connection_with_tls_context",
+              "path": "src/requests/adapters.py",
+              "line_start": 423,
+              "line_end": 470,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: send",
+              "path": "src/requests/adapters.py",
+              "line_start": 590,
+              "line_end": 696,
+              "detail_level": "stub"
+            }
+          ]
+        },
+        {
+          "id": "redirect-it",
+          "query": "Dove vengono rimosse le credenziali quando un redirect cambia host?",
+          "seconds_including_startup": 4.966,
+          "used_characters": 5996,
+          "stdout_characters": 15402,
+          "observed_body_line": "del headers[\"Authorization\"]",
+          "body_line_present": false,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "function: host",
+              "path": "src/requests/cookies.py",
+              "line_start": 99,
+              "line_end": 100,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: get_host",
+              "path": "src/requests/cookies.py",
+              "line_start": 43,
+              "line_end": 44,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: Session",
+              "path": "src/requests/sessions.py",
+              "line_start": 356,
+              "line_end": 816,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: resolve_redirects",
+              "path": "src/requests/sessions.py",
+              "line_start": 159,
+              "line_end": 280,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_pyopenssl_redirect",
+              "path": "tests/test_requests.py",
+              "line_start": 956,
+              "line_end": 957,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: prepare_url",
+              "path": "src/requests/models.py",
+              "line_start": 409,
+              "line_end": 481,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: consume_socket_content",
+              "path": "tests/testserver/server.py",
+              "line_start": 7,
+              "line_end": 22,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: redirect_resp_handler",
+              "path": "tests/test_lowlevel.py",
+              "line_start": 313,
+              "line_end": 325,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: get",
+              "path": "src/requests/api.py",
+              "line_start": 62,
+              "line_end": 73,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: handle_redirect",
+              "path": "src/requests/auth.py",
+              "line_start": 236,
+              "line_end": 239,
+              "detail_level": "contract"
+            }
+          ]
+        },
+        {
+          "id": "redirect-symbol",
+          "query": "SessionRedirectMixin.rebuild_auth",
+          "seconds_including_startup": 5.493,
+          "used_characters": 5974,
+          "stdout_characters": 13950,
+          "observed_body_line": "del headers[\"Authorization\"]",
+          "body_line_present": true,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "function: rebuild_auth",
+              "path": "src/requests/sessions.py",
+              "line_start": 282,
+              "line_end": 300,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: should_strip_auth",
+              "path": "src/requests/sessions.py",
+              "line_start": 127,
+              "line_end": 157,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: get_netrc_auth",
+              "path": "src/requests/utils.py",
+              "line_start": 207,
+              "line_end": 248,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: resolve_redirects",
+              "path": "src/requests/sessions.py",
+              "line_start": 159,
+              "line_end": 280,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: Session",
+              "path": "src/requests/sessions.py",
+              "line_start": 356,
+              "line_end": 816,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: SessionRedirectMixin",
+              "path": "src/requests/sessions.py",
+              "line_start": 106,
+              "line_end": 353,
+              "detail_level": "stub"
+            },
+            {
+              "title": "function: request",
+              "path": "src/requests/api.py",
+              "line_start": 14,
+              "line_end": 59,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: send",
+              "path": "src/requests/adapters.py",
+              "line_start": 590,
+              "line_end": 696,
+              "detail_level": "contract"
+            }
+          ]
+        },
+        {
+          "id": "timeout-symbol",
+          "query": "HTTPAdapter.send timeout",
+          "seconds_including_startup": 5.309,
+          "used_characters": 5988,
+          "stdout_characters": 13835,
+          "observed_body_line": "connect, read = timeout",
+          "body_line_present": false,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "class: Timeout",
+              "path": "src/requests/exceptions.py",
+              "line_start": 71,
+              "line_end": 77,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: RequestException",
+              "path": "src/requests/exceptions.py",
+              "line_start": 12,
+              "line_end": 24,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: ReadTimeout",
+              "path": "src/requests/exceptions.py",
+              "line_start": 87,
+              "line_end": 88,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: ConnectTimeout",
+              "path": "src/requests/exceptions.py",
+              "line_start": 80,
+              "line_end": 84,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: TestTimeout",
+              "path": "tests/test_requests.py",
+              "line_start": 2483,
+              "line_end": 2549,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: send",
+              "path": "src/requests/adapters.py",
+              "line_start": 590,
+              "line_end": 696,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_none_timeout",
+              "path": "tests/test_requests.py",
+              "line_start": 2503,
+              "line_end": 2513,
+              "detail_level": "stub"
+            },
+            {
+              "title": "class: BaseAdapter",
+              "path": "src/requests/adapters.py",
+              "line_start": 113,
+              "line_end": 140,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: HTTPAdapter",
+              "path": "src/requests/adapters.py",
+              "line_start": 143,
+              "line_end": 696,
+              "detail_level": "stub"
+            }
+          ]
+        },
+        {
+          "id": "proxy-symbol",
+          "query": "should_bypass_proxies",
+          "seconds_including_startup": 4.935,
+          "used_characters": 5936,
+          "stdout_characters": 16471,
+          "observed_body_line": "no_proxy = get_proxy(\"no_proxy\")",
+          "body_line_present": true,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "function: should_bypass_proxies",
+              "path": "src/requests/utils.py",
+              "line_start": 755,
+              "line_end": 813,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: get_proxy",
+              "path": "src/requests/utils.py",
+              "line_start": 764,
+              "line_end": 765,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: is_ipv4_address",
+              "path": "src/requests/utils.py",
+              "line_start": 698,
+              "line_end": 706,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: address_in_network",
+              "path": "src/requests/utils.py",
+              "line_start": 672,
+              "line_end": 684,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: set_environ",
+              "path": "src/requests/utils.py",
+              "line_start": 734,
+              "line_end": 752,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: is_valid_cidr",
+              "path": "src/requests/utils.py",
+              "line_start": 709,
+              "line_end": 730,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_should_bypass_proxies_pass_only_hostname",
+              "path": "tests/test_utils.py",
+              "line_start": 774,
+              "line_end": 780,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: test_should_bypass_proxies_no_proxy",
+              "path": "tests/test_utils.py",
+              "line_start": 825,
+              "line_end": 831,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: get_environ_proxies",
+              "path": "src/requests/utils.py",
+              "line_start": 816,
+              "line_end": 825,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_should_bypass_proxies",
+              "path": "tests/test_utils.py",
+              "line_start": 746,
+              "line_end": 758,
+              "detail_level": "stub"
+            }
+          ]
+        }
+      ],
+      "inspections": [
+        {
+          "id": "freshness",
+          "arguments": [
+            "check",
+            "--json"
+          ],
+          "status": "fresh",
+          "candidate_count": null,
+          "edges": []
+        },
+        {
+          "id": "auth-find",
+          "arguments": [
+            "find",
+            "rebuild_auth",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": []
+        },
+        {
+          "id": "auth-callers",
+          "arguments": [
+            "references",
+            "SessionRedirectMixin.rebuild_auth",
+            "--direction",
+            "callers",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": [
+            {
+              "from": "SessionRedirectMixin.resolve_redirects",
+              "to": "SessionRedirectMixin.rebuild_auth",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 246,
+                  "expression": "self.rebuild_auth"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "strip-callers",
+          "arguments": [
+            "references",
+            "SessionRedirectMixin.should_strip_auth",
+            "--direction",
+            "callers",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": [
+            {
+              "from": "SessionRedirectMixin.rebuild_auth",
+              "to": "SessionRedirectMixin.should_strip_auth",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 290,
+                  "expression": "self.should_strip_auth"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "timeout-ambiguous",
+          "arguments": [
+            "references",
+            "send",
+            "--json"
+          ],
+          "status": "ambiguous",
+          "candidate_count": 4,
+          "edges": []
+        },
+        {
+          "id": "timeout-callees",
+          "arguments": [
+            "references",
+            "HTTPAdapter.send",
+            "--direction",
+            "callees",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": [
+            {
+              "from": "HTTPAdapter.send",
+              "to": "HTTPAdapter.request_url",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 617,
+                  "expression": "self.request_url"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "HTTPAdapter.build_response",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 696,
+                  "expression": "self.build_response"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "HTTPAdapter.get_connection_with_tls_context",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 610,
+                  "expression": "self.get_connection_with_tls_context"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "HTTPAdapter.cert_verify",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 616,
+                  "expression": "self.cert_verify"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "HTTPAdapter.add_headers",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 618,
+                  "expression": "self.add_headers"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "ConnectTimeout",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 665,
+                  "expression": "ConnectTimeout"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "SSLError",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 675,
+                  "expression": "SSLError"
+                },
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 688,
+                  "expression": "SSLError"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "ProxyError",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 671,
+                  "expression": "ProxyError"
+                },
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 683,
+                  "expression": "ProxyError"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "ConnectionError",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 659,
+                  "expression": "ConnectionError"
+                },
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 677,
+                  "expression": "ConnectionError"
+                },
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 680,
+                  "expression": "ConnectionError"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "RetryError",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 668,
+                  "expression": "RetryError"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "ReadTimeout",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 690,
+                  "expression": "ReadTimeout"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "InvalidURL",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 614,
+                  "expression": "InvalidURL"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "InvalidHeader",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 692,
+                  "expression": "InvalidHeader"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "proxy-callers",
+          "arguments": [
+            "references",
+            "should_bypass_proxies",
+            "--direction",
+            "callers",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": [
+            {
+              "from": "get_environ_proxies",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/utils.py",
+                  "line": 822,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "resolve_proxies",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/utils.py",
+                  "line": 871,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies_no_proxy",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 831,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies_pass_only_hostname",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 779,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies_win_registry_bad_values",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 917,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 758,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies_win_registry_ProxyOverride_value",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 977,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies_win_registry",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 884,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "Session.merge_environment_settings",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 760,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "resolve_proxies",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/utils.py",
+                  "line": 872,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "TestGetEnvironProxies.test_not_bypass",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 243,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "TestGetEnvironProxies.test_bypass_no_proxy_keyword",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 255,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "TestGetEnvironProxies.test_bypass",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 232,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "TestGetEnvironProxies.test_not_bypass_no_proxy_keyword",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 272,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "SessionRedirectMixin.rebuild_proxies",
+              "to": "resolve_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 316,
+                  "expression": "resolve_proxies"
+                }
+              ]
+            },
+            {
+              "from": "Session.send",
+              "to": "resolve_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 684,
+                  "expression": "resolve_proxies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "request-trace",
+          "arguments": [
+            "references",
+            "get",
+            "--file",
+            "src/requests/api.py",
+            "--direction",
+            "callees",
+            "--depth",
+            "5",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": [
+            {
+              "from": "get",
+              "to": "request",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/api.py",
+                  "line": 73,
+                  "expression": "request"
+                }
+              ]
+            },
+            {
+              "from": "request",
+              "to": "Session",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/api.py",
+                  "line": 58,
+                  "expression": "sessions.Session"
+                }
+              ]
+            },
+            {
+              "from": "Session",
+              "to": "SessionRedirectMixin",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 356,
+                  "expression": "SessionRedirectMixin"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "interface": "checkout-1.2.1",
+      "contexts": [
+        {
+          "id": "redirect-en",
+          "query": "Where is the Authorization header removed when a redirect changes the host?",
+          "seconds_including_startup": 8.006,
+          "used_characters": 5962,
+          "stdout_characters": 14024,
+          "observed_body_line": "del headers[\"Authorization\"]",
+          "body_line_present": false,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "function: test_auth_is_retained_for_redirect_on_host",
+              "path": "tests/test_requests.py",
+              "line_start": 1894,
+              "line_end": 1899,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: get",
+              "path": "src/requests/api.py",
+              "line_start": 62,
+              "line_end": 73,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: Session",
+              "path": "src/requests/sessions.py",
+              "line_start": 356,
+              "line_end": 816,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: SessionRedirectMixin",
+              "path": "src/requests/sessions.py",
+              "line_start": 106,
+              "line_end": 353,
+              "detail_level": "stub"
+            },
+            {
+              "title": "function: resolve_redirects",
+              "path": "src/requests/sessions.py",
+              "line_start": 159,
+              "line_end": 280,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_digestauth_401_count_reset_on_redirect",
+              "path": "tests/test_lowlevel.py",
+              "line_start": 127,
+              "line_end": 189,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: getheaders",
+              "path": "src/requests/cookies.py",
+              "line_start": 120,
+              "line_end": 121,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: is_permanent_redirect",
+              "path": "src/requests/models.py",
+              "line_start": 777,
+              "line_end": 782,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: Request",
+              "path": "src/requests/models.py",
+              "line_start": 230,
+              "line_end": 310,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_header_and_body_removal_on_redirect",
+              "path": "tests/test_requests.py",
+              "line_start": 310,
+              "line_end": 325,
+              "detail_level": "contract"
+            }
+          ]
+        },
+        {
+          "id": "timeout-en",
+          "query": "Where is the connect and read timeout tuple handled before sending an HTTP request?",
+          "seconds_including_startup": 6.82,
+          "used_characters": 5987,
+          "stdout_characters": 15011,
+          "observed_body_line": "connect, read = timeout",
+          "body_line_present": false,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "class: ConnectTimeout",
+              "path": "src/requests/exceptions.py",
+              "line_start": 80,
+              "line_end": 84,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: ConnectionError",
+              "path": "src/requests/exceptions.py",
+              "line_start": 59,
+              "line_end": 60,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: Timeout",
+              "path": "src/requests/exceptions.py",
+              "line_start": 71,
+              "line_end": 77,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: send",
+              "path": "src/requests/adapters.py",
+              "line_start": 590,
+              "line_end": 696,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: digest_failed_response_handler",
+              "path": "tests/test_lowlevel.py",
+              "line_start": 208,
+              "line_end": 224,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: TestTimeout",
+              "path": "tests/test_requests.py",
+              "line_start": 2483,
+              "line_end": 2549,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: merge_environment_settings",
+              "path": "src/requests/sessions.py",
+              "line_start": 750,
+              "line_end": 779,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: request",
+              "path": "src/requests/sessions.py",
+              "line_start": 500,
+              "line_end": 591,
+              "detail_level": "stub"
+            },
+            {
+              "title": "function: send",
+              "path": "src/requests/sessions.py",
+              "line_start": 673,
+              "line_end": 748,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: build_connection_pool_key_attributes",
+              "path": "src/requests/adapters.py",
+              "line_start": 373,
+              "line_end": 421,
+              "detail_level": "stub"
+            }
+          ]
+        },
+        {
+          "id": "proxy-en",
+          "query": "How does NO_PROXY bypass environment proxy configuration?",
+          "seconds_including_startup": 7.438,
+          "used_characters": 5943,
+          "stdout_characters": 19549,
+          "observed_body_line": "no_proxy = get_proxy(\"no_proxy\")",
+          "body_line_present": false,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "function: test_should_bypass_proxies_no_proxy",
+              "path": "tests/test_utils.py",
+              "line_start": 825,
+              "line_end": 831,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: should_bypass_proxies",
+              "path": "src/requests/utils.py",
+              "line_start": 755,
+              "line_end": 813,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: merge_setting",
+              "path": "src/requests/sessions.py",
+              "line_start": 61,
+              "line_end": 88,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: request",
+              "path": "src/requests/sessions.py",
+              "line_start": 500,
+              "line_end": 591,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: HTTPAdapter",
+              "path": "src/requests/adapters.py",
+              "line_start": 143,
+              "line_end": 696,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: PreparedRequest",
+              "path": "src/requests/models.py",
+              "line_start": 313,
+              "line_end": 637,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: Session",
+              "path": "src/requests/sessions.py",
+              "line_start": 356,
+              "line_end": 816,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: get_connection_with_tls_context",
+              "path": "src/requests/adapters.py",
+              "line_start": 423,
+              "line_end": 470,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: send",
+              "path": "src/requests/adapters.py",
+              "line_start": 590,
+              "line_end": 696,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: send",
+              "path": "src/requests/sessions.py",
+              "line_start": 673,
+              "line_end": 748,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: merge_environment_settings",
+              "path": "src/requests/sessions.py",
+              "line_start": 750,
+              "line_end": 779,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: resolve_redirects",
+              "path": "src/requests/sessions.py",
+              "line_start": 159,
+              "line_end": 280,
+              "detail_level": "contract"
+            }
+          ]
+        },
+        {
+          "id": "redirect-it",
+          "query": "Dove vengono rimosse le credenziali quando un redirect cambia host?",
+          "seconds_including_startup": 4.582,
+          "used_characters": 5985,
+          "stdout_characters": 14988,
+          "observed_body_line": "del headers[\"Authorization\"]",
+          "body_line_present": false,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "function: host",
+              "path": "src/requests/cookies.py",
+              "line_start": 99,
+              "line_end": 100,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: get_host",
+              "path": "src/requests/cookies.py",
+              "line_start": 43,
+              "line_end": 44,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: Session",
+              "path": "src/requests/sessions.py",
+              "line_start": 356,
+              "line_end": 816,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: resolve_redirects",
+              "path": "src/requests/sessions.py",
+              "line_start": 159,
+              "line_end": 280,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_pyopenssl_redirect",
+              "path": "tests/test_requests.py",
+              "line_start": 956,
+              "line_end": 957,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: prepare_url",
+              "path": "src/requests/models.py",
+              "line_start": 409,
+              "line_end": 481,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: consume_socket_content",
+              "path": "tests/testserver/server.py",
+              "line_start": 7,
+              "line_end": 22,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: redirect_resp_handler",
+              "path": "tests/test_lowlevel.py",
+              "line_start": 313,
+              "line_end": 325,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: get",
+              "path": "src/requests/api.py",
+              "line_start": 62,
+              "line_end": 73,
+              "detail_level": "contract"
+            }
+          ]
+        },
+        {
+          "id": "redirect-symbol",
+          "query": "SessionRedirectMixin.rebuild_auth",
+          "seconds_including_startup": 4.922,
+          "used_characters": 5924,
+          "stdout_characters": 16946,
+          "observed_body_line": "del headers[\"Authorization\"]",
+          "body_line_present": true,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "function: rebuild_auth",
+              "path": "src/requests/sessions.py",
+              "line_start": 282,
+              "line_end": 300,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: should_strip_auth",
+              "path": "src/requests/sessions.py",
+              "line_start": 127,
+              "line_end": 157,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: get_netrc_auth",
+              "path": "src/requests/utils.py",
+              "line_start": 207,
+              "line_end": 248,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: resolve_redirects",
+              "path": "src/requests/sessions.py",
+              "line_start": 159,
+              "line_end": 280,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: Session",
+              "path": "src/requests/sessions.py",
+              "line_start": 356,
+              "line_end": 816,
+              "detail_level": "contract"
+            },
+            {
+              "title": "class: SessionRedirectMixin",
+              "path": "src/requests/sessions.py",
+              "line_start": 106,
+              "line_end": 353,
+              "detail_level": "stub"
+            },
+            {
+              "title": "function: request",
+              "path": "src/requests/api.py",
+              "line_start": 14,
+              "line_end": 59,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: send",
+              "path": "src/requests/adapters.py",
+              "line_start": 590,
+              "line_end": 696,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_cookielib_cookiejar_on_redirect",
+              "path": "tests/test_requests.py",
+              "line_start": 440,
+              "line_end": 470,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_different_connection_pool_for_mtls_settings",
+              "path": "tests/test_requests.py",
+              "line_start": 2970,
+              "line_end": 3007,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_different_connection_pool_for_tls_settings_verify_True",
+              "path": "tests/test_requests.py",
+              "line_start": 2874,
+              "line_end": 2903,
+              "detail_level": "stub"
+            }
+          ]
+        },
+        {
+          "id": "timeout-symbol",
+          "query": "HTTPAdapter.send timeout",
+          "seconds_including_startup": 5.21,
+          "used_characters": 5949,
+          "stdout_characters": 12268,
+          "observed_body_line": "connect, read = timeout",
+          "body_line_present": true,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "function: send",
+              "path": "src/requests/adapters.py",
+              "line_start": 590,
+              "line_end": 696,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: InvalidURL",
+              "path": "src/requests/exceptions.py",
+              "line_start": 107,
+              "line_end": 108,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: ConnectionError",
+              "path": "src/requests/exceptions.py",
+              "line_start": 59,
+              "line_end": 60,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: RetryError",
+              "path": "src/requests/exceptions.py",
+              "line_start": 131,
+              "line_end": 132,
+              "detail_level": "full"
+            },
+            {
+              "title": "class: ProxyError",
+              "path": "src/requests/exceptions.py",
+              "line_start": 63,
+              "line_end": 64,
+              "detail_level": "stub"
+            }
+          ]
+        },
+        {
+          "id": "proxy-symbol",
+          "query": "should_bypass_proxies",
+          "seconds_including_startup": 6.473,
+          "used_characters": 5963,
+          "stdout_characters": 16511,
+          "observed_body_line": "no_proxy = get_proxy(\"no_proxy\")",
+          "body_line_present": true,
+          "warnings": [],
+          "selected": [
+            {
+              "title": "function: should_bypass_proxies",
+              "path": "src/requests/utils.py",
+              "line_start": 755,
+              "line_end": 813,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: get_proxy",
+              "path": "src/requests/utils.py",
+              "line_start": 764,
+              "line_end": 765,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: is_ipv4_address",
+              "path": "src/requests/utils.py",
+              "line_start": 698,
+              "line_end": 706,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: address_in_network",
+              "path": "src/requests/utils.py",
+              "line_start": 672,
+              "line_end": 684,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: set_environ",
+              "path": "src/requests/utils.py",
+              "line_start": 734,
+              "line_end": 752,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: is_valid_cidr",
+              "path": "src/requests/utils.py",
+              "line_start": 709,
+              "line_end": 730,
+              "detail_level": "contract"
+            },
+            {
+              "title": "function: test_should_bypass_proxies_pass_only_hostname",
+              "path": "tests/test_utils.py",
+              "line_start": 774,
+              "line_end": 780,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: test_should_bypass_proxies_no_proxy",
+              "path": "tests/test_utils.py",
+              "line_start": 825,
+              "line_end": 831,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: get_environ_proxies",
+              "path": "src/requests/utils.py",
+              "line_start": 816,
+              "line_end": 825,
+              "detail_level": "full"
+            },
+            {
+              "title": "function: test_should_bypass_proxies",
+              "path": "tests/test_utils.py",
+              "line_start": 746,
+              "line_end": 758,
+              "detail_level": "contract"
+            }
+          ]
+        }
+      ],
+      "inspections": [
+        {
+          "id": "freshness",
+          "arguments": [
+            "check",
+            "--json"
+          ],
+          "status": "fresh",
+          "candidate_count": null,
+          "edges": []
+        },
+        {
+          "id": "auth-find",
+          "arguments": [
+            "find",
+            "rebuild_auth",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": []
+        },
+        {
+          "id": "auth-callers",
+          "arguments": [
+            "references",
+            "SessionRedirectMixin.rebuild_auth",
+            "--direction",
+            "callers",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": [
+            {
+              "from": "SessionRedirectMixin.resolve_redirects",
+              "to": "SessionRedirectMixin.rebuild_auth",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 246,
+                  "expression": "self.rebuild_auth"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "strip-callers",
+          "arguments": [
+            "references",
+            "SessionRedirectMixin.should_strip_auth",
+            "--direction",
+            "callers",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": [
+            {
+              "from": "SessionRedirectMixin.rebuild_auth",
+              "to": "SessionRedirectMixin.should_strip_auth",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 290,
+                  "expression": "self.should_strip_auth"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "timeout-ambiguous",
+          "arguments": [
+            "references",
+            "send",
+            "--json"
+          ],
+          "status": "ambiguous",
+          "candidate_count": 4,
+          "edges": []
+        },
+        {
+          "id": "timeout-callees",
+          "arguments": [
+            "references",
+            "HTTPAdapter.send",
+            "--direction",
+            "callees",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": [
+            {
+              "from": "HTTPAdapter.send",
+              "to": "HTTPAdapter.request_url",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 617,
+                  "expression": "self.request_url"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "HTTPAdapter.build_response",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 696,
+                  "expression": "self.build_response"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "HTTPAdapter.get_connection_with_tls_context",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 610,
+                  "expression": "self.get_connection_with_tls_context"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "HTTPAdapter.cert_verify",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 616,
+                  "expression": "self.cert_verify"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "HTTPAdapter.add_headers",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 618,
+                  "expression": "self.add_headers"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "ConnectTimeout",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 665,
+                  "expression": "ConnectTimeout"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "SSLError",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 675,
+                  "expression": "SSLError"
+                },
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 688,
+                  "expression": "SSLError"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "ProxyError",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 671,
+                  "expression": "ProxyError"
+                },
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 683,
+                  "expression": "ProxyError"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "ConnectionError",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 659,
+                  "expression": "ConnectionError"
+                },
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 677,
+                  "expression": "ConnectionError"
+                },
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 680,
+                  "expression": "ConnectionError"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "RetryError",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 668,
+                  "expression": "RetryError"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "ReadTimeout",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 690,
+                  "expression": "ReadTimeout"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "InvalidURL",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 614,
+                  "expression": "InvalidURL"
+                }
+              ]
+            },
+            {
+              "from": "HTTPAdapter.send",
+              "to": "InvalidHeader",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/adapters.py",
+                  "line": 692,
+                  "expression": "InvalidHeader"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "proxy-callers",
+          "arguments": [
+            "references",
+            "should_bypass_proxies",
+            "--direction",
+            "callers",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": [
+            {
+              "from": "get_environ_proxies",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/utils.py",
+                  "line": 822,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "resolve_proxies",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/utils.py",
+                  "line": 871,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies_no_proxy",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 831,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies_pass_only_hostname",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 779,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies_win_registry_bad_values",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 917,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 758,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies_win_registry_ProxyOverride_value",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 977,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "test_should_bypass_proxies_win_registry",
+              "to": "should_bypass_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 884,
+                  "expression": "should_bypass_proxies"
+                }
+              ]
+            },
+            {
+              "from": "Session.merge_environment_settings",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 760,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "resolve_proxies",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/utils.py",
+                  "line": 872,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "TestGetEnvironProxies.test_not_bypass",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 243,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "TestGetEnvironProxies.test_bypass_no_proxy_keyword",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 255,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "TestGetEnvironProxies.test_bypass",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 232,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "TestGetEnvironProxies.test_not_bypass_no_proxy_keyword",
+              "to": "get_environ_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "tests/test_utils.py",
+                  "line": 272,
+                  "expression": "get_environ_proxies"
+                }
+              ]
+            },
+            {
+              "from": "SessionRedirectMixin.rebuild_proxies",
+              "to": "resolve_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 316,
+                  "expression": "resolve_proxies"
+                }
+              ]
+            },
+            {
+              "from": "Session.send",
+              "to": "resolve_proxies",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 684,
+                  "expression": "resolve_proxies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "request-trace",
+          "arguments": [
+            "references",
+            "get",
+            "--file",
+            "src/requests/api.py",
+            "--direction",
+            "callees",
+            "--depth",
+            "5",
+            "--json"
+          ],
+          "status": "ok",
+          "candidate_count": null,
+          "edges": [
+            {
+              "from": "get",
+              "to": "request",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/api.py",
+                  "line": 73,
+                  "expression": "request"
+                }
+              ]
+            },
+            {
+              "from": "request",
+              "to": "Session",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/api.py",
+                  "line": 58,
+                  "expression": "sessions.Session"
+                }
+              ]
+            },
+            {
+              "from": "Session",
+              "to": "SessionRedirectMixin",
+              "resolution": "python_scope_import",
+              "evidence": [
+                {
+                  "path": "src/requests/sessions.py",
+                  "line": 356,
+                  "expression": "SessionRedirectMixin"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "direct_search": [
+    {
+      "task": "redirect",
+      "pattern": "should_strip_auth|del headers\\[\"Authorization\"\\]",
+      "seconds": 0.0435,
+      "lines": 3,
+      "characters": 245,
+      "output": "src/requests\\sessions.py:127:    def should_strip_auth(self, old_url, new_url):\nsrc/requests\\sessions.py:290:        if \"Authorization\" in headers and self.should_strip_auth(\nsrc/requests\\sessions.py:295:            del headers[\"Authorization\"]\n"
+    },
+    {
+      "task": "timeout",
+      "pattern": "TimeoutSauce|connect, read|timeout=timeout",
+      "seconds": 0.0378,
+      "lines": 9,
+      "characters": 718,
+      "output": "src/requests\\adapters.py:27:from urllib3.util import Timeout as TimeoutSauce\nsrc/requests\\adapters.py:621:            timeout=timeout,\nsrc/requests\\adapters.py:631:                connect, read = timeout\nsrc/requests\\adapters.py:632:                timeout = TimeoutSauce(connect=connect, read=read)\nsrc/requests\\adapters.py:635:                    f\"Invalid timeout {timeout}. Pass a (connect, read) timeout tuple, \"\nsrc/requests\\adapters.py:638:        elif isinstance(timeout, TimeoutSauce):\nsrc/requests\\adapters.py:641:            timeout = TimeoutSauce(connect=timeout, read=timeout)\nsrc/requests\\adapters.py:654:                timeout=timeout,\nsrc/requests\\sessions.py:268:                    timeout=timeout,\n"
+    },
+    {
+      "task": "proxy",
+      "pattern": "NO_PROXY|no_proxy|should_bypass_proxies",
+      "seconds": 0.0374,
+      "lines": 24,
+      "characters": 1943,
+      "output": "src/requests\\sessions.py:50:    should_bypass_proxies,\nsrc/requests\\sessions.py:305:        NO_PROXY, we strip the proxy configuration. Otherwise, we set missing\nsrc/requests\\sessions.py:759:            no_proxy = proxies.get(\"no_proxy\") if proxies is not None else None\nsrc/requests\\sessions.py:760:            env_proxies = get_environ_proxies(url, no_proxy=no_proxy)\nsrc/requests\\utils.py:711:    Very simple check of the cidr format in no_proxy variable.\nsrc/requests\\utils.py:755:def should_bypass_proxies(url, no_proxy):\nsrc/requests\\utils.py:767:    # First check whether no_proxy is defined. If it is, check that the URL\nsrc/requests\\utils.py:768:    # we're getting isn't in the no_proxy list.\nsrc/requests\\utils.py:769:    no_proxy_arg = no_proxy\nsrc/requests\\utils.py:770:    if no_proxy is None:\nsrc/requests\\utils.py:771:        no_proxy = get_proxy(\"no_proxy\")\nsrc/requests\\utils.py:778:    if no_proxy:\nsrc/requests\\utils.py:781:        no_proxy = (host for host in no_proxy.replace(\" \", \"\").split(\",\") if host)\nsrc/requests\\utils.py:784:            for proxy_ip in no_proxy:\nsrc/requests\\utils.py:789:                    # If no_proxy ip was defined in plain IP notation instead of cidr notation &\nsrc/requests\\utils.py:797:            for host in no_proxy:\nsrc/requests\\utils.py:799:                    # The URL does match something in no_proxy, so we don't want\nsrc/requests\\utils.py:803:    with set_environ(\"no_proxy\", no_proxy_arg):\nsrc/requests\\utils.py:816:def get_environ_proxies(url, no_proxy=None):\nsrc/requests\\utils.py:822:    if should_bypass_proxies(url, no_proxy=no_proxy):\nsrc/requests\\utils.py:857:    such as NO_PROXY to strip proxy configurations.\nsrc/requests\\utils.py:868:    no_proxy = proxies.get(\"no_proxy\")\nsrc/requests\\utils.py:871:    if trust_env and not should_bypass_proxies(url, no_proxy=no_proxy):\nsrc/requests\\utils.py:872:        environ_proxies = get_environ_proxies(url, no_proxy=no_proxy)\n"
+    }
+  ]
+}

@@ -30,7 +30,7 @@ is fresh, and compile selected code into a bounded context for an AI agent.
 
 ## Quickstart
 
-Install **v1.2.0** from [PyPI](https://pypi.org/project/droste-memory/)
+Install **v1.2.1** from [PyPI](https://pypi.org/project/droste-memory/)
 or [GitHub Releases](https://github.com/lorismascio17/droste-memory/releases).
 See [release status](docs/RELEASING.md).
 
@@ -103,7 +103,7 @@ Running `droste` with no arguments prints the command palette:
                   '-----------------------'
 
 DROSTE-MEMORY // RIGID FRACTAL RADIAL LAYOUT
-Local Graph Engine v1.2.0-Alpha-Sharded
+Local Graph Engine v1.2.1-Alpha-Sharded
 
 Commands
   droste index <path> [--reset]
@@ -358,10 +358,17 @@ cross-process shard race). `eval/` = performance/quality benchmarks.
 
 ## Status
 
-**v1.2.0 (alpha).** Tested CLI/MCP workflows, source freshness checks and an
+**v1.2.1 (alpha).** Tested CLI/MCP workflows, source freshness checks and an
 explicitly limited static graph. Dynamic dispatch, receiver-type inference and
 complete cross-language resolution remain outside the current guarantees.
 Use one writer per database. See [validation and limitations](docs/VALIDATION.md).
+
+### What's new in v1.2.1
+
+- Keep explicit, unique symbol queries ahead of semantic lookalikes.
+- Preserve complete source locations in compact context.
+- Publish a [practical Requests investigation](docs/PRACTICAL_REVIEW.md), including
+  unresolved discovery and tracing weaknesses; no comparative performance claim.
 
 ### What's new in v1.2.0
 

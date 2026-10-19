@@ -1015,10 +1015,23 @@ class DrosteProjectIngester:
         scored: list[tuple[int, float, DrosteNode]] = []
         max_score = 0
         scope_root = self.engine.normalize_root(root)
+        scoped_nodes = [node for node in self.engine.all_nodes() if self._node_in_root(node, scope_root)]
+        # An explicit symbol is a navigation request. A semantic lookalike must
+        # not displace it, even when extra descriptive words follow its name.
+        # Only pin unique matches; ambiguous names still need find/references.
+        from .inspection import _public_symbols
+        public = _public_symbols([n for n in scoped_nodes if n.node_type == "symbol"], scope_root)
+        mentions = set(re.findall(r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+", query.lower()))
+        exact_query = query.strip().lower()
+        requested: dict[str, list[str]] = {}
+        for node_id, symbol in public.items():
+            name, qualified = symbol["name"].lower(), symbol["qualified_name"].lower()
+            for key in {node_id.lower(), name, qualified}:
+                if key == exact_query or ("." in key and key in mentions):
+                    requested.setdefault(key, []).append(node_id)
+        explicit_ids = {ids[0] for ids in requested.values() if len(ids) == 1}
         states = {r: self.engine.index_state(r) for r in self.engine.indexed_roots()} if query_embedding else {}
-        for node in self.engine.all_nodes():
-            if not self._node_in_root(node, scope_root):
-                continue
+        for node in scoped_nodes:
             score = self._score_node(node, terms, query)
             sem = 0.0
             node_state = states.get(node.index_root)
@@ -1041,11 +1054,13 @@ class DrosteProjectIngester:
                 "semantic": round(sem, 4),
                 "source_rank": round(source_rank, 4),
                 "blended": round(blended, 4),
+                "explicit_symbol": node.id in explicit_ids,
                 "node": node,
             })
 
         matches.sort(
             key=lambda match: (
+                not match["explicit_symbol"],
                 -match["blended"],
                 float(match["node"].zoom_threshold),
                 match["node"].title,
@@ -1998,10 +2013,11 @@ class DrosteProjectIngester:
         origin_title = origin.title if origin else str(via.get("origin", "origin"))
         label = str(link.get("label") or link.get("type") or "dependency")
         link_type = str(link.get("type") or "dependency")
-        relation = "called by" if via.get("role") == "caller" else "calls"
+        # Syntax dependencies include inheritance as well as calls.
+        relation = "referenced by" if via.get("role") == "caller" else "references"
         return (
             f"### Wormhole [{link_type}]: {origin_title} {relation} this\n"
-            f"via: {label}()"
+            f"via: {label}"
         )
 
     def _ordered_nodes(self, root_id: str, nodes: dict[str, DrosteNode]) -> list[DrosteNode]:
@@ -2445,7 +2461,12 @@ class DrosteProjectIngester:
         if sig:
             body += f"\n{sig}"
         head = (prefix.rstrip("\n") + f" [{role}-contract]\n") if prefix else ""
-        return (head + body)[:CALLER_STUB_CHARS]
+        contract = head + body
+        if len(contract) <= CALLER_STUB_CHARS:
+            return contract
+        # Drop optional decoration, never part of a locator or signature.
+        pointer = f"{role}: {node.title}\nsource: {loc}\n[Body omitted.]"
+        return pointer if len(pointer) <= CALLER_STUB_CHARS else ""
 
     def _signature_line(self, node: DrosteNode) -> str:
         """One-line signature for a Python def/class, or '' if not derivable."""

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "droste-memory"
-version = "1.2.0"
+version = "1.2.1"
 readme = "README.md"
 description = "Local hybrid structural and semantic graph memory engine."
 license = "MIT"

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.1 — 2026-10-19
+
+- Keep uniquely identified symbols ahead of semantic lookalikes in context,
+  including qualified names followed by descriptive words and exact symbol IDs.
+- Preserve complete source locations in compact neighbor context; drop optional
+  decoration instead of slicing paths or signatures mid-line.
+- Describe syntax edges as references: inheritance is not a constructor call.
+- Add three navigation/locator regressions and a reproducible Requests CLI
+  investigation. Publish the observed retrieval weaknesses as well as successes.
+
 ## 1.2.0 — 2026-10-19
 
 - Resolve Python calls through lexical scopes, imports, aliases, re-exports and
