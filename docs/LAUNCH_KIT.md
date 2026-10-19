@@ -11,7 +11,8 @@ For current installation and status, use the [README](../README.md).
 - GitHub: https://github.com/lorismascio17/droste-memory
 - PyPI: https://pypi.org/project/droste-memory/
 - Install: `python -m pip install --upgrade droste-memory`
-- Latest version: `1.2.1`
+- Latest version: `1.3.0`
+- Recorded token zoom demo: https://lorismascio17.github.io/droste-memory/explore.html
 - Main command: `droste`
 - MCP command: `droste mcp`
 

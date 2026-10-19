@@ -119,6 +119,7 @@ Commands
   droste status
   droste zoom <symbol_name>
   droste context [query] --budget 1500
+  droste explore [query] --tokens 2000 --level map|structure|source
   droste mcp
 
 Fast path: droste context hub_core --budget 1000 | clip
@@ -199,9 +200,12 @@ is deterministic but does not provide semantic similarity.
 - **Hybrid seed.** A query is matched by a normalized blend of lexical score and
   semantic cosine (fastembed `bge-small-en-v1.5`, 384-dim), then the graph
   expands the seed bidirectionally (callees and callers).
-- **Context packer.** The budget is characters, with a minimum of 500. Full
+- **Progressive explorer.** `explore` budgets its complete response in reference
+  tokenizer tokens, including metadata. Navigate map, structure and source by
+  node ID; acknowledge exact retained views to avoid resending their bodies.
+- **Legacy context packer.** `context --budget` is characters, with a minimum of 500. Full
   source, contracts or explicit source stubs fit that effective limit, including
-  separators. No tokenizer-specific token count is promised.
+  separators. That legacy interface does not promise tokenizer-specific counts.
 - **Sharded persistence.** One shard per file under a database-specific `.droste/` directory, blake2b
   dirty-tracking so a re-index rewrites only what changed; atomic file replacement with metadata
   written last. Multi-file updates are not transactions; use one writer per DB
@@ -304,8 +308,12 @@ Restart your client after changing the MCP config. Index the project, call
 context. Inspect the real source before making changes.
 
 Primary tools: `droste_index_project`, `droste_check_index`,
-`droste_find_symbols`, `droste_references`, `droste_get_context`, `droste_status`.
+`droste_find_symbols`, `droste_references`, `droste_explore`, `droste_get_context`, `droste_status`.
 Supporting canvas tools: `inject_concept`, `move_camera_and_zoom`, `get_space_status`.
+`droste_explore` is the progressive token-budget path. Existing open MCP
+connections keep their earlier process until reconnection; a new connection
+loads the upgraded tool list. Retained-view handles are valid only while the
+client still retains the corresponding text; clear them after compaction.
 
 ---
 

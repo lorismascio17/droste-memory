@@ -1,5 +1,36 @@
 # Release status and verification
 
+## 1.3.0 — 19 October 2026
+
+Adds progressive map/structure/source exploration, complete-response reference
+token budgets, retained-view acknowledgements and the tenth MCP tool. The new
+tool emits one counted text block without duplicated structured output.
+
+Published on [GitHub Releases](https://github.com/lorismascio17/droste-memory/releases/tag/v1.3.0),
+[PyPI](https://pypi.org/project/droste-memory/1.3.0/) and the
+[MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.lorismascio17%2Fdroste-memory/versions/1.3.0).
+[Release CI](https://github.com/lorismascio17/droste-memory/actions/runs/39273606263)
+passes 105 cases on Linux Python 3.10/3.11/3.12 and Windows Python 3.12,
+plus package and installed-wheel CLI/receipt/HTTP/ten-tool MCP checks.
+The [PyPI workflow](https://github.com/lorismascio17/droste-memory/actions/runs/39273676204)
+repeated validation before publishing; the
+[registry workflow](https://github.com/lorismascio17/droste-memory/actions/runs/39274187264)
+then published the aligned package. Every member of the downloaded PyPI wheel
+matches the GitHub CI distribution. All three recorded Requests cases were
+also reproduced through the actual PyPI-installed package.
+
+The [public demo](https://lorismascio17.github.io/droste-memory/explore.html)
+uses real precomputed responses, not model answers. Desktop/mobile checks
+covered source zoom, exact payload inspection, retained visits, three cases
+and wheel-driven semantic zoom; the deployed HTML, JSON and preview image
+were also fetched over HTTPS. Its [documentation](EXPLORATION.md) distinguishes
+payload-size observations from task quality and provider billing.
+
+No extractor migration is needed specifically for this release. Prepare the
+small tokenizer vocabularies once for offline use. Existing MCP connections
+keep their old process until reconnection. The legacy character-budget tools
+and original viewer remain supported.
+
 ## 1.2.1 — 19 October 2026
 
 Fixes explicit-symbol context priority and sliced neighbor source locations,

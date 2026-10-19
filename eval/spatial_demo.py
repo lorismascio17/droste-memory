@@ -92,6 +92,7 @@ def main():
     args.output.write_text(json.dumps(report, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     # Include the unmodified upstream license with this public source demo.
     (args.output.parent / "requests-LICENSE.txt").write_bytes(archive.read(prefix + "LICENSE"))
+    (args.output.parent / "requests-NOTICE.txt").write_bytes(archive.read(prefix + "NOTICE"))
 
 
 if __name__ == "__main__":
