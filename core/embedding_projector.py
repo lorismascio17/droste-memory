@@ -65,6 +65,12 @@ class EmbeddingProjector:
         self._load_model()
         return self._backend
 
+    @property
+    def identity(self) -> str:
+        backend = self.backend
+        model = self.FASTEMBED_MODEL if backend == "fastembed" else (self.model_name if backend != "hash" else "token-hash-v1")
+        return f"{backend}:{model}"
+
     def embed_text(self, text: str) -> Vector:
         normalized_text = (text or "").strip() or "empty concept"
         self._load_model()
@@ -87,6 +93,8 @@ class EmbeddingProjector:
             except Exception as exc:  # pragma: no cover - depends on local model state
                 self._model_error = f"{type(exc).__name__}: {exc}"
 
+        self._backend = "hash"
+        self._fastembed = self._model = None
         return self._fallback_embedding(normalized_text)
 
     def embed_texts(self, texts: Sequence[str]) -> list[Vector]:

@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.2.0 — 2026-10-19
+
+- Resolve Python calls through lexical scopes, imports, aliases, re-exports and
+  explicit self/cls receivers; omit unknown or ambiguous targets.
+- Preserve call-site evidence and resolution methods in stored links.
+- Add `find`, `references`, `check`, `watch` and three MCP inspection tools.
+- Record source hashes and partial coverage; warn on stale context.
+- Batch watcher refreshes across supported languages, including deletions and
+  renames, and rebuild incoming links when definitions move.
+- Respect nested `.gitignore` and root `.drosteignore`; exclude symlinks and
+  the selected database. Collect Java, C#, Ruby, PHP and Python stub files.
+- Keep identical code in different modules distinct. Preserve other indexed
+  roots and concepts on `index --reset`.
+- Separate embedding caches by model identity; invalidate reused node vectors
+  when switching backend and fall back to lexical queries until re-indexed.
+- Enforce the effective character budget including separators; remove the
+  undocumented focus overflow and use source pointers for oversized bodies.
+- Add 28 regression cases, installed-wheel calls to all nine MCP tools, and a
+  pinned public-source corpus with a documented unresolved receiver case.
+
 
 ## 1.1.7 ? 2026-10-19
 

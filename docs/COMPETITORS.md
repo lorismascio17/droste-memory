@@ -43,6 +43,9 @@ visual map. The next validation work should compare fixed public repositories
 and actual coding tasks, measuring precision, missed edges, setup time, index
 latency, memory and answer quality at the same context budget.
 
-Current limits: heuristic symbol resolution, a static viewer snapshot, and
-single-writer sharded persistence. The optional reactive dashboard currently
-watches Python additions/modifications; full re-indexing is needed for removals.
+Droste 1.2.0 adds Python scope/import resolution and batched refreshes for all
+supported languages, including removals. It also adds source evidence, symbol
+lookup and verifiable index freshness. The [public source validation](VALIDATION.md)
+is a small manually labelled corpus, not a competing-product benchmark.
+Current limits include unknown receiver types, heuristic non-Python links, a
+static viewer snapshot and single-writer sharded persistence.

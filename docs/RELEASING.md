@@ -1,5 +1,22 @@
 # Release status and verification
 
+## 1.2.0 — 19 October 2026
+
+Adds scope/import-aware Python links, source evidence, `find`, `references`,
+`check`, matching MCP tools and a batched watcher for all supported languages.
+The index records hashes and partial coverage, respects project ignore rules,
+preserves other roots on forced re-index, and separates embedding model caches.
+Context budgets are characters and include separators without overflow.
+
+Local validation: 69 regression cases and the pinned, manually labelled
+[public source corpus](VALIDATION.md). The corpus passes 19/20 assertions;
+its dynamic-receiver miss is retained in the report rather than hidden.
+The installed-wheel smoke covers all nine packaged MCP tools and CLI workflows.
+
+Existing databases should be re-indexed after upgrading to rebuild links and
+record a verifiable source snapshot. A normal `droste index /path/to/project`
+preserves other projects and manually injected concepts.
+
 ## 1.1.7 — 19 October 2026
 
 The GitHub release provides a wheel and source archive built by CI. Validation

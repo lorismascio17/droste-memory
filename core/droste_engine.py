@@ -183,6 +183,8 @@ class DrosteLink:
     weight: float = 1.0
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
+    resolution: str | None = None
+    evidence: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "DrosteLink":
@@ -195,6 +197,8 @@ class DrosteLink:
             weight=max(0.0, float(data.get("weight", 1.0))),
             created_at=str(data.get("created_at") or utc_now()),
             updated_at=str(data.get("updated_at") or utc_now()),
+            resolution=data.get("resolution"),
+            evidence=list(data.get("evidence") or []),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -210,6 +214,10 @@ class DrosteLink:
             data["label"] = self.label
         if self.index_root:
             data["index_root"] = self.index_root
+        if self.resolution:
+            data["resolution"] = self.resolution
+        if self.evidence:
+            data["evidence"] = list(self.evidence)
         return data
 
 
@@ -347,29 +355,16 @@ class DrosteConceptEngine:
         index_root: str,
         reset: bool = False,
         links: list[dict[str, Any] | DrosteLink] | None = None,
+        index_state: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         clean_root = str(Path(index_root).resolve())
         with self._lock:
             current_nodes = self._nodes()
             current_links = self._links()
-            if reset:
-                existing_nodes: list[DrosteNode] = []
-                existing_links: list[DrosteLink] = []
-            else:
-                existing_nodes = [
-                    node for node in current_nodes
-                    if node.index_root
-                    and str(Path(node.index_root).resolve()) != clean_root
-                ]
-                existing_nodes.extend(
-                    node for node in current_nodes
-                    if not node.index_root
-                )
-                existing_links = [
-                    link for link in current_links
-                    if not link.index_root
-                    or str(Path(link.index_root).resolve()) != clean_root
-                ]
+            # A forced re-index resets this root's extraction cache, never
+            # other projects or manually injected concepts in the same DB.
+            existing_nodes = [node for node in current_nodes if self.normalize_root(node.index_root) != clean_root]
+            existing_links = [link for link in current_links if self.normalize_root(link.index_root) != clean_root]
 
             for node in nodes:
                 node.index_root = clean_root
@@ -383,6 +378,12 @@ class DrosteConceptEngine:
             node_dicts = [node.to_dict() for node in all_nodes]
             self._data["nodes"] = node_dicts
             self._data["active_root"] = clean_root
+            states = dict(self._data.get("index_states", {}))
+            if index_state is not None:
+                states[clean_root] = index_state
+            else:
+                states.pop(clean_root, None)
+            self._data["index_states"] = states
             # Prime the parsed-node cache directly with the live objects we already
             # hold, so the get_space_status() below (and the next reads) need not
             # rebuild all nodes from their dicts via from_dict. The cache key is the
@@ -479,6 +480,12 @@ class DrosteConceptEngine:
         with self._lock:
             self._maybe_reload()
             return self._links()
+
+    def index_state(self, root: str | Path) -> dict[str, Any] | None:
+        with self._lock:
+            self._maybe_reload()
+            state = self._data.get("index_states", {}).get(self.normalize_root(root))
+            return dict(state) if state is not None else None
 
     @staticmethod
     def normalize_root(root: str | Path | None) -> str | None:

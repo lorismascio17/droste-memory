@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 from urllib import error, request
@@ -38,7 +39,7 @@ from core.droste_engine import DEFAULT_DB_PATH, DrosteConceptEngine
 from core.droste_ingester import DrosteProjectIngester, droste_zoom_query
 
 
-VERSION = "v1.1.7-Alpha-Sharded"
+VERSION = "v1.2.0-Alpha-Sharded"
 VISUALIZER_CAMERA_URL = "http://127.0.0.1:5000/api/camera"
 
 RESET = "\033[0m"
@@ -95,6 +96,10 @@ def print_splash(color: bool | None = None) -> None:
     print(_paint("Commands", CYAN, enabled))
     print("  droste index <path> [--reset]")
     print("  droste status")
+    print("  droste check [--json]")
+    print("  droste find <query> [--file path]")
+    print("  droste references <symbol> [--direction callers|callees|both]")
+    print("  droste watch <path>")
     print("  droste zoom <symbol_name>")
     print("  droste context [query] --budget 1500")
     print("  droste mcp")
@@ -160,32 +165,15 @@ def _engine(db_path: Path | None = None) -> DrosteConceptEngine:
 
 def command_status(args: argparse.Namespace) -> int:
     engine = _engine(args.db)
-    migration = engine.ensure_sharded_storage()
-    nodes = engine.all_nodes()
-    links = engine.all_links()
-    symbol_count = sum(1 for node in nodes if node.node_type == "symbol")
-    syntax_link_count = sum(1 for link in links if link.type == "syntax_dependency")
-    shard_stats = _shard_stats(engine._shard_dir())
-
-    payload = {
-        "storage": _storage_label(engine.db_path),
-        "database": str(engine.db_path),
-        "node_count": len(nodes),
-        "symbol_count": symbol_count,
-        "link_count": len(links),
-        "syntax_link_count": syntax_link_count,
-        "shard_dir": shard_stats["path"],
-        "shard_count": shard_stats["count"],
-        "shard_bytes": shard_stats["bytes"],
-        "migration": migration,
-    }
+    from core.droste_mcp import droste_status_payload
+    payload = droste_status_payload(engine, root=getattr(args, "root", None))
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
         return 0
 
     print_compact_header()
     print("status")
-    print(f"  migration:     {migration['status']}")
+    print(f"  migration:     {payload['migration']['status']}")
     print(f"  storage:       {payload['storage']}")
     print(f"  database:      {payload['database']}")
     print(f"  live nodes:    {payload['node_count']}")
@@ -195,6 +183,9 @@ def command_status(args: argparse.Namespace) -> int:
     print(f"  shard dir:     {payload['shard_dir']}")
     print(f"  shard files:   {payload['shard_count']}")
     print(f"  shard cache:   {_human_bytes(int(payload['shard_bytes']))}")
+    print(f"  index health:  {payload['index_health']['status']}")
+    for warning in payload["warnings"]:
+        print("WARNING: " + warning, file=sys.stderr)
     return 0
 
 
@@ -265,8 +256,64 @@ def command_context(args: argparse.Namespace) -> int:
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0
+    for warning in result.get("warnings", []):
+        print("WARNING: " + warning, file=sys.stderr)
     print(result.get("compiled_context", ""))
     return 0
+
+
+def command_inspect(args: argparse.Namespace) -> int:
+    from core.inspection import check_index, find_symbols, references
+    engine = _engine(args.db)
+    if args.command == "check":
+        result = check_index(engine, args.root)
+    elif args.command == "find":
+        result = find_symbols(engine, args.query, root=args.root, file=args.file, limit=args.limit)
+    else:
+        result = references(engine, args.target, root=args.root, file=args.file,
+                            direction=args.direction, depth=args.depth, limit=args.limit)
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        for warning in result.get("warnings", []):
+            print("WARNING: " + warning, file=sys.stderr)
+        print(f"{args.command}: {result['status']}")
+        if args.command == "check":
+            print(f"  root: {result['root']}")
+            print(f"  verification: {result['verification']}")
+            for category in ("added", "changed", "deleted", "unreadable"):
+                for path in result.get(category, []):
+                    print(f"  {category}: {path}")
+        elif args.command == "find" or result["status"] != "ok":
+            for node in result.get("matches", result.get("candidates", [])):
+                print(f"  {node['qualified_name']}  {node['path']}:{node['line_start']}  [{node['id']}]")
+        else:
+            for ref in result["references"]:
+                source, target = ref["from"], ref["to"]
+                print(f"  {source['qualified_name']} ({source['path']}:{source['line_start']}) -> "
+                      f"{target['qualified_name']} ({target['path']}:{target['line_start']}) [{ref['resolution']}]")
+            if result["truncated"]:
+                print("  Results truncated; increase --limit or reduce --depth.")
+    if args.command == "check":
+        return 0 if result["status"] == "fresh" else 1
+    return 0 if result["status"] == "ok" else 2
+
+
+def command_watch(args: argparse.Namespace) -> int:
+    from core.droste_watcher import ReactiveWatcher
+    ingester = DrosteProjectIngester(_engine(args.db))
+    ingester.index_project(args.path, max_files=args.max_files, max_symbols=args.max_symbols,
+        max_symbols_per_lang=args.max_symbols_per_lang, max_file_bytes=args.max_file_bytes)
+    watcher = ReactiveWatcher(ingester, roots=[args.path], poll_interval=args.interval)
+    watcher.poll_once()
+    print(f"Watching {Path(args.path).resolve()} (poll={watcher.poll_interval}s). Ctrl+C to stop.", flush=True)
+    try:
+        while True:
+            time.sleep(watcher.poll_interval)
+            for event in watcher.poll_once():
+                print(json.dumps(event, ensure_ascii=False), flush=True)
+    except KeyboardInterrupt:
+        return 0
 
 
 def command_index(args: argparse.Namespace) -> int:
@@ -284,6 +331,8 @@ def command_index(args: argparse.Namespace) -> int:
         reset=args.reset,
         max_files=args.max_files,
         max_symbols=args.max_symbols,
+        max_symbols_per_lang=args.max_symbols_per_lang,
+        max_file_bytes=args.max_file_bytes,
     )
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False))
@@ -299,6 +348,10 @@ def command_index(args: argparse.Namespace) -> int:
     print(f"  syntax edges:  {result.get('syntax_dependency_links', 0)}")
     print(f"  reused files:  {result.get('reused_files', 0)}")
     print(f"  embeddings:    {engine.projector.backend}")
+    if result.get("partial"):
+        print("WARNING: Partial index: " + ", ".join(result["partial_reasons"]), file=sys.stderr)
+    if result.get("embedding_warning"):
+        print("WARNING: " + result["embedding_warning"], file=sys.stderr)
     if ts_on:
         print("  tree-sitter:   on (polyglot call-graph active)")
     else:
@@ -387,11 +440,14 @@ def build_parser() -> argparse.ArgumentParser:
                        help="Wipe this root's prior nodes before indexing.")
     index.add_argument("--max-files", type=int, default=2000)
     index.add_argument("--max-symbols", type=int, default=20000)
+    index.add_argument("--max-symbols-per-lang", type=int, default=3000)
+    index.add_argument("--max-file-bytes", type=int, default=512000)
     index.add_argument("--json", action="store_true", help="Emit the full index result JSON.")
     index.set_defaults(func=command_index)
 
     status = sub.add_parser("status", help="Show local graph health.")
     status.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
+    status.add_argument("--root", default=None)
     status.set_defaults(func=command_status)
 
     zoom = sub.add_parser("zoom", help="Focus a symbol in editor and visualizer.")
@@ -407,10 +463,34 @@ def build_parser() -> argparse.ArgumentParser:
 
     context = sub.add_parser("context", help="Emit compressed LLM context.")
     context.add_argument("query", nargs="?", default="project")
-    context.add_argument("--budget", type=int, default=1500)
+    context.add_argument("--budget", type=int, default=1500, help="Character budget (minimum 500), including separators.")
     context.add_argument("--root", default=None, help="Limit retrieval to one indexed root.")
     context.add_argument("--json", action="store_true", help="Emit full context payload JSON.")
     context.set_defaults(func=command_context)
+
+    for name, help_text in [("check", "Verify index hashes, freshness and coverage."),
+                            ("find", "Find symbols with index IDs and source lines."),
+                            ("references", "Inspect callers/callees with source evidence.")]:
+        command = sub.add_parser(name, help=help_text)
+        command.add_argument("--root", default=None)
+        command.add_argument("--json", action="store_true")
+        if name != "check":
+            command.add_argument("query" if name == "find" else "target")
+            command.add_argument("--file", default=None, help="Exact project-relative or absolute source path.")
+            command.add_argument("--limit", type=int, default=20 if name == "find" else 100)
+        if name == "references":
+            command.add_argument("--direction", choices=["callers", "callees", "both"], default="callers")
+            command.add_argument("--depth", type=int, default=1)
+        command.set_defaults(func=command_inspect)
+
+    watch = sub.add_parser("watch", help="Index and refresh supported files, including deletions.")
+    watch.add_argument("path")
+    watch.add_argument("--interval", type=float, default=1.0)
+    watch.add_argument("--max-files", type=int, default=2000)
+    watch.add_argument("--max-symbols", type=int, default=20000)
+    watch.add_argument("--max-symbols-per-lang", type=int, default=3000)
+    watch.add_argument("--max-file-bytes", type=int, default=512000)
+    watch.set_defaults(func=command_watch)
 
     view = sub.add_parser("view", help="Open the fractal visualizer on the live graph.")
     view.add_argument("--root", default=None, help="Indexed root to view (default: most recent).")
@@ -430,7 +510,11 @@ def main(argv: list[str] | None = None) -> int:
     if not args.command:
         print_splash()
         return 0
-    return int(args.func(args))
+    try:
+        return int(args.func(args))
+    except (ValueError, FileNotFoundError, NotADirectoryError, PermissionError) as exc:
+        print(f"droste: {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

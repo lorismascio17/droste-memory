@@ -94,6 +94,9 @@ Primary tools:
 - `droste_index_project(path, reset=false)`
 - `droste_get_context(query, budget=1500, root=null)`
 - `droste_status(root=null)`
+- `droste_check_index(root=null)` — verify source hashes and coverage
+- `droste_find_symbols(query, root=null, file=null, limit=20)`
+- `droste_references(target, root=null, file=null, direction="callers", depth=1, limit=100)`
 
 Supporting tools:
 
@@ -134,4 +137,3 @@ python scripts/growth_radar.py
 - GitHub: https://github.com/lorismascio17/droste-memory
 - PyPI: https://pypi.org/project/droste-memory/
 - MCP server name: `io.github.lorismascio17/droste-memory`
-

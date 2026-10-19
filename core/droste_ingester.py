@@ -26,7 +26,7 @@ from .droste_engine import DrosteConceptEngine, DrosteNode, clamp, utc_now
 from . import treesitter_extract
 
 
-INDEX_VERSION = 3  # 3: SQL/RPC graph edges + critical-node smart zoom
+INDEX_VERSION = 4  # scope/import-aware links; invalidate earlier cached extraction
 DEFAULT_MAX_FILES = 600
 # Global symbol ceiling. Raised 2400->8000 once minified/bundle files are
 # filtered out (they used to burn the whole budget). Paired with a per-language
@@ -46,11 +46,8 @@ LANG_SYMBOL_CAP = {
 }
 DEFAULT_MAX_FILE_BYTES = 512_000
 DEFAULT_CONTEXT_BUDGET = 6000
-# v0.4.2+packer-fix: strict budget enforcement constants.
-# A focus node may overflow the cap ONLY if its full form is this small — a
-# genuine micro-answer that must always be shown whole. Anything larger is
-# decomposed (full -> contract -> file-skeleton) to fit the budget.
-MICRO_FOCUS_CHARS = 1500
+# Context budgets are characters, with a 500-character minimum for useful
+# source headers. Full/contract/stub forms must fit the effective budget.
 # External callers are appended as compact, distinct contract stubs, never
 # allowed to drag in a heavy file body.
 CALLER_STUB_CHARS = 250
@@ -72,7 +69,7 @@ _LANG_BY_EXT = {
     ".py": "python", ".pyi": "python",
     ".js": "jsts", ".mjs": "jsts", ".cjs": "jsts", ".jsx": "jsts",
     ".ts": "jsts", ".tsx": "jsts",
-    ".go": "go", ".rs": "rust", ".dart": "dart", ".java": "java",
+    ".go": "go", ".rs": "rust", ".dart": "dart", ".java": "java", ".cs": "csharp",
     ".sql": "sql",
     ".rb": "ruby", ".php": "php",
     ".swift": "swift", ".kt": "kotlin", ".kts": "kotlin",
@@ -143,6 +140,7 @@ SKIP_FILES = {
 
 TEXT_EXTENSIONS = {
     ".py",
+    ".pyi",
     ".js",
     ".jsx",
     ".ts",
@@ -163,6 +161,10 @@ TEXT_EXTENSIONS = {
     ".sh",
     ".go",
     ".rs",
+    ".java",
+    ".cs",
+    ".rb",
+    ".php",
     ".dart",
     ".sql",
     ".swift",
@@ -344,8 +346,22 @@ class DrosteProjectIngester:
         # whole cache from disk every time (~0.38s) — pure waste once it is in RAM.
         self._embed_cache_mem: dict[str, list[float]] | None = None
         self._embed_cache_mtime: float = -1.0
+        self._embed_cache_model: str | None = None
 
     def index_project(
+        self, path: str | Path, *, reset: bool = False,
+        max_files: int = DEFAULT_MAX_FILES, max_symbols: int = DEFAULT_MAX_SYMBOLS,
+        max_symbols_per_lang: int = DEFAULT_MAX_SYMBOLS_PER_LANG,
+        max_file_bytes: int = DEFAULT_MAX_FILE_BYTES,
+    ) -> dict[str, Any]:
+        # Serialize refreshes with readers using the same engine (dashboard /
+        # watcher / MCP). Cross-process writers still need separate databases.
+        with self.engine._lock:
+            return self._index_project(path, reset=reset, max_files=max_files,
+                max_symbols=max_symbols, max_symbols_per_lang=max_symbols_per_lang,
+                max_file_bytes=max_file_bytes)
+
+    def _index_project(
         self,
         path: str | Path,
         *,
@@ -361,7 +377,17 @@ class DrosteProjectIngester:
         if not root.is_dir():
             raise NotADirectoryError(f"Project path must be a directory: {root}")
 
-        files = self._collect_files(root, max_files=max_files)
+        if max_files < 1 or max_symbols < 0 or max_symbols_per_lang < 0 or max_file_bytes < 1:
+            raise ValueError("Index limits must be positive (symbol limits may be zero)")
+        discovered = self._collect_files(root, max_files=max_files + 1)
+        files = discovered[:max_files]
+        config = dict(max_files=max_files, max_symbols=max_symbols,
+                      max_symbols_per_lang=max_symbols_per_lang, max_file_bytes=max_file_bytes)
+        previous_state = self.engine.index_state(root) or {}
+        embedding_model = self.engine.projector.identity
+        source_texts: dict[str, str] = {}
+        snapshots: dict[str, Any] = {}
+        symbol_limit_reached = False
         now = utc_now()
         nodes: dict[str, DrosteNode] = {}
         directory_file_counts: dict[str, int] = {}
@@ -381,7 +407,8 @@ class DrosteProjectIngester:
         # the previous index's node objects (still in the engine until the
         # replace below) so reuse can pull them by id with embeddings intact.
         registry_all = self._load_file_registry()
-        prev_registry = {} if reset else registry_all.get(str(root), {})
+        prev_registry = {} if (reset or previous_state.get("config") != config or
+            previous_state.get("embedding_model") != embedding_model) else registry_all.get(str(root), {})
         existing_by_id: dict[str, DrosteNode] = (
             {} if reset else {node.id: node for node in self.engine.all_nodes()}
         )
@@ -442,11 +469,15 @@ class DrosteProjectIngester:
                 continue
 
             try:
+                file_stat = file_path.stat()
                 raw = file_path.read_bytes()
             except OSError:
                 skipped_files += 1
                 continue
 
+            rel = self._relative_path(file_path, root)
+            snapshots[rel] = {"sha256": hashlib.sha256(raw).hexdigest(),
+                              "size": len(raw), "mtime_ns": file_stat.st_mtime_ns}
             if b"\x00" in raw:
                 skipped_files += 1
                 continue
@@ -455,7 +486,7 @@ class DrosteProjectIngester:
                 truncated_files += 1
 
             content_hash = hashlib.sha1(raw).hexdigest()
-            if content_hash in seen_file_hashes:
+            if content_hash in seen_file_hashes and _language_of(str(file_path)) not in set(_LANG_BY_EXT.values()):
                 # Byte-identical to an already-indexed file (e.g. skill docs
                 # copied under both .agents/ and .claude/). Index once; skip the
                 # duplicate so it does not pollute search/context with twins.
@@ -464,6 +495,7 @@ class DrosteProjectIngester:
             seen_file_hashes[content_hash] = self._relative_path(file_path, root)
 
             rel = self._relative_path(file_path, root)
+            source_texts[str(file_path)] = raw.decode("utf-8", errors="replace")
             parent = ensure_directory(file_path.parent)
 
             # v0.6.3+file-skip: FILE-LEVEL CONTENT-HASH SKIP. If this file's
@@ -474,10 +506,15 @@ class DrosteProjectIngester:
             # are still rebuilt globally below (cheap), so wormholes to/from any
             # file that DID change stay correct. Disabled on a forced reset.
             reg_entry = prev_registry.get(rel)
+            lang = _language_of(str(file_path))
+            remaining = max(0, min(max_symbols - symbol_count,
+                LANG_SYMBOL_CAP.get(lang, max_symbols_per_lang) - symbol_count_by_lang.get(lang, 0)))
             if (
                 not reset
                 and reg_entry is not None
                 and reg_entry.get("sha1") == content_hash
+                and not reg_entry.get("symbols_truncated", False)
+                and len(reg_entry.get("symbols", [])) <= remaining
                 and existing_by_id.get(reg_entry.get("file_node_id")) is not None
                 and all(
                     existing_by_id.get(sym.get("node_id")) is not None
@@ -537,6 +574,9 @@ class DrosteProjectIngester:
                 max_symbols - symbol_count,
                 lang_cap - lang_used,
             ))
+            symbols_truncated = len(symbols) > remaining_symbol_budget
+            if symbols_truncated:
+                symbol_limit_reached = True
             symbols = symbols[:remaining_symbol_budget]
             symbol_count += len(symbols)
             symbol_count_by_lang[lang] = lang_used + len(symbols)
@@ -614,6 +654,7 @@ class DrosteProjectIngester:
                 "sha1": content_hash,
                 "file_node_id": file_id,
                 "symbols": registry_symbols,
+                "symbols_truncated": symbols_truncated,
             }
 
         for node in nodes.values():
@@ -630,13 +671,28 @@ class DrosteProjectIngester:
 
         self._assign_fractal_coordinates(root_node, nodes)
         ordered_nodes = self._ordered_nodes(root_node.id, nodes)
-        links = self._build_dependency_links(symbol_records, definitions_by_name, str(root))
+        links = self._build_dependency_links(symbol_records, definitions_by_name, str(root), source_texts)
+        partial_reasons = []
+        if len(discovered) > max_files:
+            partial_reasons.append("file_limit")
+        if symbol_limit_reached:
+            partial_reasons.append("symbol_limit")
+        if truncated_files:
+            partial_reasons.append("truncated_files")
+        if skipped_files:
+            partial_reasons.append("unreadable_or_binary_files")
         self._populate_embeddings(ordered_nodes, root=str(root))
+        index_state = {"index_version": INDEX_VERSION, "indexed_at": now,
+                       "config": config, "files": snapshots,
+                       "embedding_model": self.engine.projector.identity,
+                       "partial_reasons": partial_reasons,
+                       "resolution": getattr(self, "_resolution_stats", {})}
         self.engine.replace_indexed_nodes(
             ordered_nodes,
             index_root=str(root),
             reset=reset,
             links=links,
+            index_state=index_state,
         )
         # Persist the registry only after the graph write succeeded, so a crash
         # mid-index never leaves the registry pointing at nodes that aren't in
@@ -670,6 +726,11 @@ class DrosteProjectIngester:
             "treesitter_available": treesitter_extract.available(),
             "syntax_dependency_links": syntax_links,
             "root_node": self.engine._public_node(root_node),
+            "partial": bool(partial_reasons),
+            "partial_reasons": partial_reasons,
+            "resolution": index_state["resolution"],
+            "embedding_model": index_state["embedding_model"],
+            "embedding_warning": self.engine.projector.model_error,
         }
 
     def zoom_query(self, query: str) -> dict[str, Any]:
@@ -702,22 +763,34 @@ class DrosteProjectIngester:
         clean_budget = max(500, int(budget or DEFAULT_CONTEXT_BUDGET))
         scope_root, root_warning = self.engine.resolve_query_root(root)
         warnings = [root_warning] if root_warning else []
+        from .inspection import check_index
+        freshness = check_index(self.engine, root=scope_root, verify_content=False)
+        warnings.extend(freshness["warnings"])
         if root_warning and scope_root is None:
+            notice = f"WARNING: {root_warning}"
+            if len(notice) > clean_budget:
+                notice = "WARNING: Cannot select a project root. See warnings."
             return {
                 "query": query,
                 "budget": clean_budget,
-                "used": 0,
+                "budget_unit": "characters",
+                "used": len(notice),
                 "selected_count": 0,
                 "selected_nodes": [],
-                "compiled_context": f"WARNING: {root_warning}",
+                "compiled_context": notice,
                 "root": None,
                 "active_root": self.engine.active_root(),
                 "indexed_roots": self.engine.indexed_roots(),
                 "warnings": warnings,
+                "index_health": freshness,
             }
 
         # v0.6.0+hybrid: semantic seed re-rank (graph causal ordering untouched).
-        matches = self.search_nodes(query, limit=24, semantic=True, root=scope_root)
+        state = self.engine.index_state(scope_root) if scope_root else None
+        semantic = state is not None and state.get("embedding_model") == self.engine.projector.identity
+        if not semantic:
+            warnings.append("Embedding backend differs from the index. Using lexical search; re-index with the current backend to enable semantic retrieval.")
+        matches = self.search_nodes(query, limit=24, semantic=semantic, root=scope_root)
         all_nodes = {
             node.id: node for node in self.engine.all_nodes()
             if self._node_in_root(node, scope_root)
@@ -824,7 +897,8 @@ class DrosteProjectIngester:
         per_node_cap = max(MIN_USEFUL_SECTION, clean_budget // target_breadth)
 
         for i, (score, node, via) in enumerate(candidates):
-            remaining = clean_budget - used
+            separator = 2 if sections else 0
+            remaining = clean_budget - used - separator
             if remaining < MIN_USEFUL_SECTION:
                 break
             is_focus = i == 0
@@ -838,7 +912,7 @@ class DrosteProjectIngester:
             # fits `node_budget`. File nodes are decomposed via AST (or the
             # generic brace extractor) into a slim module skeleton instead of
             # being dumped whole; symbol callers collapse to compact stubs. The
-            # ONLY node permitted to exceed the cap is a micro focus node.
+            # Source is represented by whole lines or an explicit source stub.
             fitted = self._fit_section(
                 node, via, all_nodes, node_budget, terms, is_focus=is_focus,
             )
@@ -846,15 +920,11 @@ class DrosteProjectIngester:
                 continue
             section, detail_level = fitted
 
-            # HARD GUARDRAIL: _fit_section fits everything to `remaining` except
-            # the deliberate micro-focus overflow. This is the invalicable maths.
-            if used + len(section) > clean_budget:
-                allowed = is_focus and detail_level == "full" and len(section) <= MICRO_FOCUS_CHARS
-                if not allowed:
-                    continue
+            if len(section) > remaining:
+                continue
 
             sections.append(section)
-            used += len(section)
+            used += len(section) + separator
             selected_item: dict[str, Any] = {
                 "score": score,
                 "node": self._slim_node(node),
@@ -863,8 +933,9 @@ class DrosteProjectIngester:
             if via:
                 link = via["link"]
                 selected_item["via_wormhole"] = {
-                    key: link.get(key) for key in ("from", "to", "type", "label")
+                    key: link.get(key) for key in ("from", "to", "type", "label", "resolution", "evidence")
                 }
+                selected_item["via_wormhole"]["evidence"] = (link.get("evidence") or [])[:5]
                 selected_item["wormhole_role"] = via.get("role")
             selected.append(selected_item)
             if used >= clean_budget:
@@ -873,6 +944,7 @@ class DrosteProjectIngester:
         return {
             "query": query,
             "budget": clean_budget,
+            "budget_unit": "characters",
             "used": used,
             "selected_count": len(selected),
             "selected_nodes": selected,
@@ -881,6 +953,7 @@ class DrosteProjectIngester:
             "active_root": self.engine.active_root(),
             "indexed_roots": self.engine.indexed_roots(),
             "warnings": warnings,
+            "index_health": freshness,
         }
 
     def _derive_zoom(self, query: str, budget: int) -> float:
@@ -924,7 +997,10 @@ class DrosteProjectIngester:
         query_embedding: list[float] | None = None
         if semantic:
             try:
+                model = self.engine.projector.identity
                 query_embedding = self.engine.projector.embed_text(query)
+                if self.engine.projector.identity != model:
+                    query_embedding = None
             except Exception:
                 query_embedding = None
 
@@ -939,12 +1015,15 @@ class DrosteProjectIngester:
         scored: list[tuple[int, float, DrosteNode]] = []
         max_score = 0
         scope_root = self.engine.normalize_root(root)
+        states = {r: self.engine.index_state(r) for r in self.engine.indexed_roots()} if query_embedding else {}
         for node in self.engine.all_nodes():
             if not self._node_in_root(node, scope_root):
                 continue
             score = self._score_node(node, terms, query)
             sem = 0.0
-            if query_embedding and node.embedding:
+            node_state = states.get(node.index_root)
+            compatible = node_state is not None and node_state.get("embedding_model") == model if query_embedding else False
+            if query_embedding and node.embedding and compatible:
                 sem = self._cosine(query_embedding, node.embedding)
             # keep lexical hits always; admit semantic-only hits above a floor
             if score > 0 or (query_embedding is not None and sem >= SEMANTIC_MATCH_MIN):
@@ -1006,6 +1085,7 @@ class DrosteProjectIngester:
         if not pending:
             return
 
+        model = self.engine.projector.identity
         cache = self._load_embed_cache()
         misses: list[DrosteNode] = []
         miss_texts: list[str] = []
@@ -1037,6 +1117,13 @@ class DrosteProjectIngester:
                 node.embedding = vector
                 if vector:
                     cache[key] = vector
+            if self.engine.projector.identity != model:
+                # An inference failure switched to hash mode. Never persist
+                # mixed vector spaces, including already-cached vectors.
+                for node in nodes:
+                    node.embedding = []
+                self._populate_embeddings(nodes, root=root)
+                return
             self._save_embed_cache(cache)
 
     # ------------------------------------------------------------------
@@ -1087,17 +1174,20 @@ class DrosteProjectIngester:
         except OSError:
             mtime = -1.0
         # Serve the in-RAM copy unless another process advanced the file mtime.
-        if self._embed_cache_mem is not None and mtime == self._embed_cache_mtime:
+        model = self.engine.projector.identity
+        if self._embed_cache_mem is not None and mtime == self._embed_cache_mtime and model == self._embed_cache_model:
             return self._embed_cache_mem
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             self._embed_cache_mem = {}
             self._embed_cache_mtime = mtime
+            self._embed_cache_model = model
             return self._embed_cache_mem
-        vectors = raw.get("vectors") if isinstance(raw, dict) else None
+        vectors = raw.get("vectors") if isinstance(raw, dict) and raw.get("model") == model else None
         self._embed_cache_mem = vectors if isinstance(vectors, dict) else {}
         self._embed_cache_mtime = mtime
+        self._embed_cache_model = model
         return self._embed_cache_mem
 
     def _save_embed_cache(self, cache: dict[str, list[float]]) -> None:
@@ -1112,7 +1202,7 @@ class DrosteProjectIngester:
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             tmp.write_text(
-                json.dumps({"version": 1, "vectors": cache}, ensure_ascii=False),
+                json.dumps({"version": 2, "model": self.engine.projector.identity, "vectors": cache}, ensure_ascii=False),
                 encoding="utf-8",
             )
             tmp.replace(path)
@@ -1285,19 +1375,32 @@ class DrosteProjectIngester:
         return dot / math.sqrt(na * nb)
 
     def _collect_files(self, root: Path, max_files: int) -> list[Path]:
+        from .source_rules import SourceRules
+        rules = SourceRules(root)
         files: list[Path] = []
-        for directory, dirnames, filenames in os.walk(root):
+        def scan_error(error):
+            raise error
+        for directory, dirnames, filenames in os.walk(root, onerror=scan_error):
+            current_dir = Path(directory)
+            rules.enter(current_dir)
             dirnames[:] = [
                 dirname for dirname in sorted(dirnames)
                 if dirname not in SKIP_DIRS
                 and not dirname.startswith(".cache")
                 and not dirname.endswith(".egg-info")
+                and not (current_dir / dirname).is_symlink()
+                and not rules.ignored(current_dir / dirname, is_directory=True)
             ]
-            current_dir = Path(directory)
             for filename in sorted(filenames):
                 if len(files) >= max_files:
                     return files
                 path = current_dir / filename
+                if path.resolve() == self.engine.db_path:
+                    continue
+                if rules.ignored(path):
+                    continue
+                if path.is_symlink():
+                    continue
                 if filename in SKIP_FILES:
                     continue
                 if path.suffix.lower() not in TEXT_EXTENSIONS:
@@ -1329,7 +1432,7 @@ class DrosteProjectIngester:
         return avg_len > _MINIFY_AVG_LINE_LEN
 
     def _extract_symbols(self, path: Path, text: str) -> list[dict[str, Any]]:
-        if path.suffix.lower() == ".py":
+        if path.suffix.lower() in {".py", ".pyi"}:
             return self._extract_python_symbols(text)
         if path.suffix.lower() in {".md", ".mdx"}:
             return self._extract_markdown_sections(text)
@@ -1688,8 +1791,12 @@ class DrosteProjectIngester:
         symbol_records: list[dict[str, Any]],
         definitions_by_name: dict[str, list[DrosteNode]],
         index_root: str,
+        source_texts: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
-        links: list[dict[str, Any]] = []
+        from .symbol_resolution import PythonResolver
+        resolver = PythonResolver(index_root, source_texts or {}, [r["node"] for r in symbol_records])
+        links: list[dict[str, Any]] = resolver.links()
+        ambiguous = 0
         seen: set[tuple[str, str, str]] = set()
 
         for record in symbol_records:
@@ -1714,6 +1821,9 @@ class DrosteProjectIngester:
             if rpc_refs or edge_refs or table_refs:
                 references = list(dict.fromkeys([*references, *sorted(db_refs | edge_refs)]))
             for reference in references:
+                if source_lang == "python" and record.get("ast_based") and reference not in db_refs | edge_refs:
+                    # Python calls are resolved using scopes/imports above.
+                    continue
                 targets = definitions_by_name.get(reference)
                 if not targets:
                     continue
@@ -1749,7 +1859,11 @@ class DrosteProjectIngester:
                     target for target in targets
                     if target.id != source.id and target.source_path == source.source_path
                 ]
-                for target in [*cross_file_targets, *local_targets][:1]:
+                candidates = local_targets or cross_file_targets
+                if len(candidates) > 1:
+                    ambiguous += 1
+                    continue
+                for target in candidates:
                     key = (source.id, target.id, reference)
                     if key in seen:
                         continue
@@ -1761,6 +1875,7 @@ class DrosteProjectIngester:
                         "label": reference,
                         "index_root": index_root,
                         "weight": 1.0,
+                        "resolution": "service_name" if reference in db_refs | edge_refs else ("local_name" if local_targets else "unique_name"),
                     })
 
             # Generic cross-language bridge: a string literal naming a symbol
@@ -1768,7 +1883,7 @@ class DrosteProjectIngester:
             # / template names). Cross-language only + guarded so same-language
             # identifiers keep flowing through the precise path above untouched.
             bridged = 0
-            for token in set(STRING_LITERAL_PATTERN.findall(snippet)):
+            for token in sorted(set(STRING_LITERAL_PATTERN.findall(snippet))):
                 if bridged >= MAX_CROSS_LANG_PER_SYMBOL:
                     break
                 low = token.lower()
@@ -1776,7 +1891,12 @@ class DrosteProjectIngester:
                     continue
                 if low in CROSS_LANG_STOPWORDS or low in REFERENCE_STOPWORDS:
                     continue
-                for target in definitions_by_name.get(token, []):
+                targets = [t for t in definitions_by_name.get(token, [])
+                           if t.id != source.id and _language_of(t.source_path) != source_lang]
+                if len(targets) > 1:
+                    ambiguous += 1
+                    continue
+                for target in targets:
                     if target.id == source.id:
                         continue
                     if _language_of(target.source_path) == source_lang:
@@ -1792,10 +1912,13 @@ class DrosteProjectIngester:
                         "label": token,
                         "index_root": index_root,
                         "weight": 1.0,
+                        "resolution": "cross_language_string",
                     })
                     bridged += 1
                     break
 
+        self._resolution_stats = {"python_unresolved_calls": resolver.unresolved_calls,
+                                  "ambiguous_name_links_skipped": ambiguous}
         return links
 
     @staticmethod
@@ -2089,8 +2212,7 @@ class DrosteProjectIngester:
         that fits within `remaining` chars, or None if nothing fits.
 
         Ladder: full -> caller-stub (callers) -> symbol contract -> file
-        skeleton. A micro focus node (full form <= MICRO_FOCUS_CHARS) is the
-        sole exception allowed to exceed `remaining`.
+        skeleton. Source pointers replace bodies that cannot fit the budget.
         """
         prefix = ""
         if via:
@@ -2106,13 +2228,12 @@ class DrosteProjectIngester:
 
         is_critical = self._node_contains_critical_lod_signal(node)
         if is_critical:
-            if is_focus and len(full) <= MICRO_FOCUS_CHARS:
-                return full, "full"
             # A critical SEED must be full or nothing (never summarize risky
             # code). A critical NEIGHBOUR is different: dropping it hides a
             # true causal edge, which is worse than a stub — fall through.
             if via is None:
-                return None
+                pointer = f"{node.title}\nsource: {node.source_path}:{node.line_start}\n[Body omitted: exceeds context budget; inspect the source before editing.]"
+                return (pointer, "stub") if len(pointer) <= remaining else None
 
         is_file = node.node_type == "file"
 
@@ -2163,10 +2284,9 @@ class DrosteProjectIngester:
                 if len(skel) <= remaining:
                     return skel, "skeleton"
 
-        # 5) MICRO FOCUS exception — a tiny answer is always shown whole even if
-        #    it nudges over a small budget. Giant nodes never reach here.
-        if is_focus and len(full) <= MICRO_FOCUS_CHARS:
-            return full, "full"
+        if is_focus:
+            pointer = f"{node.title}\nsource: {node.source_path}:{node.line_start}\n[Body omitted: exceeds context budget.]"
+            return (pointer, "stub") if len(pointer) <= remaining else None
 
         return None
 
@@ -2461,150 +2581,18 @@ class DrosteProjectIngester:
     # ---- Reactive / elastic incremental ingest (0.4.0+reactive) -----------
 
     def ingest_file_incremental(self, path: str | Path) -> dict[str, Any]:
-        """Surgically (re)index a single file into the live in-RAM graph.
+        """Refresh the owning root, reusing unchanged extraction/embeddings.
 
-        Never re-runs the full project: parses one file's AST, appends its
-        nodes on a deterministic radial coordinate that touches zero existing
-        nodes, wires its outgoing syntax_dependency edges to already-indexed
-        symbols, and atomically persists via the owning engine.
+        Rebuild all links so edits, deletions and line shifts cannot leave
+        stale incoming references. The watcher batches events per root.
         """
         fp = Path(path).expanduser().resolve()
-        if fp.suffix.lower() not in TEXT_EXTENSIONS:
-            return {"status": "skipped", "reason": "unsupported_ext", "path": str(fp)}
-
-        nodes = self.engine.all_nodes()
-        root = self._owning_index_root(fp, nodes)
+        root = self._owning_index_root(fp, self.engine.all_nodes())
         if not root:
             return {"status": "skipped", "reason": "outside_indexed_roots", "path": str(fp)}
-        root_path = Path(root).resolve()
-        rel = self._relative_path(fp, root_path)
-        if any(part in SKIP_DIRS for part in Path(rel).parts):
-            return {"status": "skipped", "reason": "ignored_dir", "path": str(fp)}
-
-        try:
-            raw = fp.read_bytes()
-        except OSError:
-            return {"status": "error", "reason": "unreadable", "path": str(fp)}
-        if b"\x00" in raw or len(raw) > DEFAULT_MAX_FILE_BYTES:
-            return {"status": "skipped", "reason": "binary_or_too_large", "path": str(fp)}
-        text = raw.decode("utf-8", errors="replace")
-        content_hash = hashlib.sha1(raw).hexdigest()
-        line_count = text.count("\n") + (1 if text else 0)
-        now = utc_now()
-
-        by_id: dict[str, DrosteNode] = {node.id: node for node in nodes}
-        # NB: symbol nodes share their file's source_path, so they must be
-        # excluded here or they would shadow the file/dir node for a path.
-        by_path: dict[str, DrosteNode] = {
-            node.source_path: node for node in nodes
-            if node.source_path and node.node_type != "symbol"
-        }
-
-        # MODIFY: drop the prior version of this exact file (+ its symbols).
-        removed_ids: set[str] = set()
-        prior = by_path.get(str(fp))
-        if prior is not None and prior.node_type == "file":
-            removed_ids.add(prior.id)
-            removed_ids.update(prior.children)
-
-        created_dirs: list[DrosteNode] = []
-        attachments: dict[str, str] = {}
-        parent = self._ensure_directory_chain(
-            fp.parent, root_path, by_path, by_id, created_dirs, attachments
-        )
-        if parent is None:
-            return {"status": "skipped", "reason": "no_parent_chain", "path": str(fp)}
-
-        file_radius = 0.095 if parent.node_type == "project" else 0.045
-        sibling_files = [
-            node for node in by_id.values()
-            if node.parent_id == parent.id
-            and node.node_type == "file"
-            and node.id not in removed_ids
-        ]
-        fx, fy = self._append_radial_coordinate(parent, sibling_files, file_radius)
-        depth = self._path_depth(rel)
-
-        symbols = self._extract_symbols(fp, text)[:400]
-        file_id = self._stable_id("file", rel, content_hash)
-        file_node = DrosteNode(
-            id=file_id,
-            title=f"file: {rel}",
-            summary=f"{fp.suffix or 'text'} file, {line_count} lines, {len(symbols)} indexed symbols",
-            detail_content=self._file_detail(rel, text, symbols, truncated=False),
-            node_type="file",
-            parent_id=parent.id,
-            source_path=str(fp),
-            line_start=1,
-            line_end=line_count,
-            index_root=str(root_path),
-            content_hash=content_hash,
-            x=fx, y=fy, semantic_x=fx, semantic_y=fy, fixed_x=fx, fixed_y=fy,
-            zoom_threshold=7.0 + depth * 1.5,
-            created_at=now, updated_at=now,
-        )
-        attachments[file_id] = parent.id
-
-        symbol_nodes: list[DrosteNode] = []
-        symbol_records: list[dict[str, Any]] = []
-        for symbol in symbols:
-            symbol_id = self._stable_id(
-                "symbol", rel, f"{symbol['kind']}:{symbol['name']}:{symbol['line_start']}"
-            )
-            snippet = self._slice_lines(text, symbol["line_start"], symbol["line_end"])
-            sym = DrosteNode(
-                id=symbol_id,
-                title=f"{symbol['kind']}: {symbol['name']}",
-                summary=f"{symbol['kind']} in {rel}:{symbol['line_start']}-{symbol['line_end']}",
-                detail_content=snippet,
-                node_type="symbol",
-                parent_id=file_id,
-                source_path=str(fp),
-                line_start=symbol["line_start"],
-                line_end=symbol["line_end"],
-                index_root=str(root_path),
-                content_hash=hashlib.sha1(snippet.encode("utf-8", errors="replace")).hexdigest(),
-                zoom_threshold=14.0 + depth * 1.5,
-                created_at=now, updated_at=now,
-            )
-            symbol_nodes.append(sym)
-            file_node.children.append(symbol_id)
-            symbol_records.append({
-                "node": sym,
-                "snippet": snippet,
-                "name": str(symbol["name"]),
-                "kind": str(symbol["kind"]),
-                "references": symbol.get("references"),
-                "ast_based": bool(symbol.get("ast_based")),
-                "ts_based": bool(symbol.get("ts_based")),
-            })
-
-        self._place_symbols_even(file_node, symbol_nodes)
-
-        # Outgoing syntax_dependency edges into the existing global graph.
-        existing_symbols = [
-            node for node in nodes
-            if node.node_type == "symbol" and node.id not in removed_ids
-        ]
-        def_index = self._definition_index(existing_symbols, symbol_nodes)
-        links = self._incremental_links(symbol_records, def_index, str(root_path))
-
-        result = self.engine.upsert_file(
-            new_nodes=[*created_dirs, file_node, *symbol_nodes],
-            new_links=links,
-            removed_node_ids=removed_ids,
-            attachments=attachments,
-        )
-        return {
-            "status": "modified" if prior is not None else "created",
-            "path": str(fp),
-            "rel": rel,
-            "coordinate": {"x": fx, "y": fy},
-            "symbols": len(symbol_nodes),
-            "new_dirs": len(created_dirs),
-            "outgoing_links": len(links),
-            "graph": result,
-        }
+        state = self.engine.index_state(root) or {}
+        result = self.index_project(root, **state.get("config", {}))
+        return {"status": "refreshed", "path": str(fp), "mode": "cached_root_refresh", "index": result}
 
     @staticmethod
     def _owning_index_root(fp: Path, nodes: list[DrosteNode]) -> str | None:
@@ -2742,72 +2730,15 @@ class DrosteProjectIngester:
                 index.setdefault(name, []).append(node)
         return index
 
-    def _incremental_links(
-        self,
-        symbol_records: list[dict[str, Any]],
-        def_index: dict[str, list[DrosteNode]],
-        index_root: str,
-    ) -> list[dict[str, Any]]:
-        links: list[dict[str, Any]] = []
-        seen: set[tuple[str, str, str]] = set()
-        for record in symbol_records:
-            source = record["node"]
-            source_lang = _language_of(source.source_path)
-            if (record.get("ast_based") or record.get("ts_based")) and record.get("references") is not None:
-                references = list(record["references"])
-                link_type = "syntax_dependency"
-            else:
-                references = self._extract_references(str(record.get("snippet", "")))
-                link_type = "dependency"
-            external_refs = self._extract_external_service_references(str(record.get("snippet", "")))
-            rpc_refs = external_refs["rpc"]
-            edge_refs = external_refs["edge"]
-            if rpc_refs or edge_refs:
-                references = list(dict.fromkeys([*references, *sorted(rpc_refs | edge_refs)]))
-            for reference in references:
-                targets = def_index.get(reference)
-                if not targets:
+    def _incremental_links(self, symbol_records, def_index, index_root):
+        texts = {}
+        for node in self.engine.all_nodes():
+            if node.node_type == "file" and node.index_root == index_root and node.source_path:
+                try:
+                    texts[node.source_path] = Path(node.source_path).read_text(encoding="utf-8")
+                except (OSError, UnicodeError):
                     continue
-                if reference in rpc_refs or reference in edge_refs:
-                    targets = [
-                        t for t in targets
-                        if self._allows_external_service_link(
-                            source_lang,
-                            t,
-                            rpc=reference in rpc_refs,
-                            edge=reference in edge_refs,
-                        )
-                    ]
-                    edge_type = "syntax_dependency"
-                else:
-                    targets = [
-                        t for t in targets if _language_of(t.source_path) == source_lang
-                    ]
-                    edge_type = link_type
-                if not targets:
-                    continue
-                cross = [
-                    t for t in targets
-                    if t.id != source.id and t.source_path != source.source_path
-                ]
-                local = [
-                    t for t in targets
-                    if t.id != source.id and t.source_path == source.source_path
-                ]
-                for target in [*cross, *local][:1]:
-                    key = (source.id, target.id, reference)
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    links.append({
-                        "from": source.id,
-                        "to": target.id,
-                        "type": edge_type,
-                        "label": reference,
-                        "index_root": index_root,
-                        "weight": 1.0,
-                    })
-        return links
+        return self._build_dependency_links(symbol_records, def_index, index_root, texts)
 
 
 def index_project(

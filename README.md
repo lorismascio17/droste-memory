@@ -4,11 +4,11 @@
 
 <!-- mcp-name: io.github.lorismascio17/droste-memory -->
 
-### See your codebase as a living galaxy — and give your agents causal memory of it.
+### Explore your codebase and give agents source-backed context.
 
-Droste indexes any repo into a fractal, zoomable map of its symbols, wires them
-together with their real call / import / DB edges across languages, and serves an
-agent the *causal* slice of code it actually needs — not just keyword matches.
+Droste indexes source files into a local symbol graph and a zoomable map.
+Find definitions, inspect static callers and callees, check whether the index
+is fresh, and compile selected code into a bounded context for an AI agent.
 
 **Local-first · zero-config · polyglot · MCP-native**
 
@@ -19,8 +19,8 @@ agent the *causal* slice of code it actually needs — not just keyword matches.
 
 ![Droste fractal code galaxy](docs/assets/hero.gif)
 
-*Zooming out reveals the causal web — every cyan arc is a real `syntax_dependency`
-edge. [Full flythrough (FastAPI)](docs/assets/demo.mp4)*
+*Explore the indexed file and symbol relationships.
+[Full flythrough (FastAPI)](docs/assets/demo.mp4)*
 
 [Live demo](https://lorismascio17.github.io/droste-memory/) ? [Quickstart](#quickstart) · [Why it's different](#why-its-different) · [How it works](#how-it-works) · [MCP](#use-it-as-an-mcp-server) · [Benchmarks](#benchmarks)
 
@@ -30,8 +30,8 @@ edge. [Full flythrough (FastAPI)](docs/assets/demo.mp4)*
 
 ## Quickstart
 
-The fixed **v1.1.7** release is available on [PyPI](https://pypi.org/project/droste-memory/1.1.7/)
-and [GitHub Releases](https://github.com/lorismascio17/droste-memory/releases/tag/v1.1.7/).
+Install **v1.2.0** from [PyPI](https://pypi.org/project/droste-memory/)
+or [GitHub Releases](https://github.com/lorismascio17/droste-memory/releases).
 See [release status](docs/RELEASING.md).
 
 ```bash
@@ -47,13 +47,37 @@ droste view    # open the fractal galaxy in your browser
 
 Install once, then index and view. `droste view` opens a full-screen, zoomable map of your
 code — scroll to dive from the project star into folder orbits, down to the
-individual functions, with the causal edges glowing between them.
+individual functions and their indexed relationships.
 
 Need it for an agent instead of your eyes?
 
 ```bash
-droste context "checkout flow" --budget 1500   # causal context slice for an LLM
+droste context "checkout flow" --budget 1500
 ```
+
+For everyday code investigation:
+
+```bash
+droste check                         # verify source hashes and index coverage
+droste find calculate                # find symbol IDs, paths and line numbers
+droste references calculate --direction both
+droste references helper --file src/math.py --direction callers --depth 3
+droste watch .                       # refresh after additions, edits, renames or deletions
+```
+
+`references` returns candidates for ambiguous names; choose a file or symbol ID
+instead of guessing. Python links include the call expression and source line.
+Other language links report their heuristic resolution method. `check` exits
+with status 1 for stale, partial or unverifiable indexes. Context responses warn
+about stale/partial coverage using a quick size/mtime check; `check` additionally
+verifies SHA-256 hashes. Run it before relying on an old index.
+
+Indexing respects nested `.gitignore` rules and a project-root `.drosteignore`
+(Git ignore syntax; applied last). Symlinks, generated bundles, dependency
+directories and Droste's own storage are excluded. Use an explicit `--db` per
+project when running independent writers. `watch` batches root refreshes and
+reuses unchanged extraction/embeddings; `view` remains a snapshot, so reopen it
+to see a refreshed graph.
 
 Running `droste` with no arguments prints the command palette:
 
@@ -79,7 +103,7 @@ Running `droste` with no arguments prints the command palette:
                   '-----------------------'
 
 DROSTE-MEMORY // RIGID FRACTAL RADIAL LAYOUT
-Local Graph Engine v1.1.6-Alpha-Sharded
+Local Graph Engine v1.2.0-Alpha-Sharded
 
 Commands
   droste index <path> [--reset]
@@ -104,18 +128,18 @@ Droste focuses on a small Python CLI, budgeted context, and visual exploration.
 The graph is a static approximation: name matching and cross-language bridges
 can produce false positives and do not prove runtime behavior.
 
-Droste's edge is the causal graph:
+The useful building blocks are:
 
-- **Causal wormholes.** Real `syntax_dependency` edges (calls, imports,
-  inheritance) in both directions — Droste hands the caller and callees, ordered,
-  within a token budget.
+- **Explainable static references.** Python calls use lexical scopes, import
+  aliases and explicit `self`/`cls` members. Dynamic receivers remain unresolved.
+  Other languages use local/unique-name matching; ambiguous candidates are skipped.
 - **Cross-language bridges.** Droste links across
   languages — app code to SQL functions/tables (`.rpc('x')`, `.from('table')`),
   to edge functions, and same-name handlers between any two languages. Your
   Dart/TS/Python frontend and your database stop being two separate worlds on the
   map.
-- **A map you actually want to look at.** The fractal galaxy isn't a gimmick —
-  it's how you see coupling, risk hotspots, and the blast radius of a change.
+- **Visual exploration.** Navigate files, symbols and indexed relationships in
+  an interactive radial map.
 - **Zero-config and local.** No cloud, no account, no API key. fastembed (ONNX,
   no torch) gives real semantics; a deterministic fallback keeps it runnable
   anywhere.
@@ -131,6 +155,16 @@ Java, C#, C/C++, Kotlin, Swift, Ruby, PHP, SQL — symbols *and* edges.
 ---
 
 ## Benchmarks
+
+The [public source validation](docs/VALIDATION.md) uses pinned Requests and
+CPython revisions with manually labelled edge assertions. It currently passes
+19 of 20 assertions: 15/16 expected edges found, 0/4 forbidden edges emitted.
+The missed edge is documented; this small corpus is not an agent-task benchmark
+or a comparison against competing products.
+
+```bash
+python eval/public_corpus.py --output public-results.json
+```
 
 The evaluation script compares structural retrieval against lexical and vector
 baselines, using caller/callee relations extracted from the same code as the
@@ -149,15 +183,16 @@ is deterministic but does not provide semantic similarity.
 
 ## How it works
 
-- **Causal graph.** Each definition is parsed (Python `ast`; tree-sitter for the
-  rest) into the names it calls / imports / inherits, becoming first-class
-  `syntax_dependency` edges. Cross-language edges add DB calls (`.rpc`, `.from`,
-  `.functions.invoke`) and string-literal name matches across languages.
+- **Static graph.** Python scopes and imports resolve named calls; tree-sitter
+  supplies definitions/references for other supported languages. Their
+  name-based links and cross-language DB/string bridges are heuristics, labelled
+  in reference results. No runtime behavior or complete type resolution is implied.
 - **Hybrid seed.** A query is matched by a normalized blend of lexical score and
   semantic cosine (fastembed `bge-small-en-v1.5`, 384-dim), then the graph
   expands the seed bidirectionally (callees and callers).
-- **Token packer.** Results fit a budget with LOD-demotion (full to contract to
-  skeleton) and a hard guardrail that never cuts a line of code mid-token.
+- **Context packer.** The budget is characters, with a minimum of 500. Full
+  source, contracts or explicit source stubs fit that effective limit, including
+  separators. No tokenizer-specific token count is promised.
 - **Sharded persistence.** One shard per file under a database-specific `.droste/` directory, blake2b
   dirty-tracking so a re-index rewrites only what changed; atomic file replacement with metadata
   written last. Multi-file updates are not transactions; use one writer per DB
@@ -255,9 +290,13 @@ The same isolated-DB pattern works in JSON clients:
 }
 ```
 
-Restart your client after changing the MCP config. In a repo, ask your agent to call `droste_index_project` first, then `droste_get_context` for causal context.
+Restart your client after changing the MCP config. Index the project, call
+`droste_check_index`, then use symbol lookup and references before retrieving
+context. Inspect the real source before making changes.
 
-Key tools: `droste_index_project`, `droste_get_context`, `droste_status`.
+Primary tools: `droste_index_project`, `droste_check_index`,
+`droste_find_symbols`, `droste_references`, `droste_get_context`, `droste_status`.
+Supporting canvas tools: `inject_concept`, `move_camera_and_zoom`, `get_space_status`.
 
 ---
 
@@ -319,9 +358,20 @@ cross-process shard race). `eval/` = performance/quality benchmarks.
 
 ## Status
 
-**v1.1.7 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
-visualizer and MCP server are working and tested. Packaging/distribution are
-maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
+**v1.2.0 (alpha).** Tested CLI/MCP workflows, source freshness checks and an
+explicitly limited static graph. Dynamic dispatch, receiver-type inference and
+complete cross-language resolution remain outside the current guarantees.
+Use one writer per database. See [validation and limitations](docs/VALIDATION.md).
+
+### What's new in v1.2.0
+
+- Fix Python scope/import resolution and stop guessing ambiguous name matches.
+- Add `find`, `references`, `check` and matching MCP tools, with source evidence.
+- Refresh all supported languages after edits, additions, deletions and renames.
+- Report partial coverage and stale context; preserve other roots during `--reset`.
+- Respect ignore rules and actually collect Java, C#, Ruby and PHP files.
+- Separate cached embeddings by model identity and rebuild when switching backends.
+- Add independent public-source assertions and exercise all nine MCP tools.
 
 ### What's new in v1.1.7
 

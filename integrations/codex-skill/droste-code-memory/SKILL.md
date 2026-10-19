@@ -32,7 +32,7 @@ droste --db /absolute/path/to/droste_memory_db.json index . --reset
 droste index .
 ```
 
-Use `--reset` only when the current DB is meant for this repo.
+Use `--reset` to force re-extraction of the selected project; other roots and manual concepts are preserved.
 
 4. Retrieve focused context:
 
@@ -54,7 +54,7 @@ JSON MCP client configuration.
 
 ## Safety Rules
 
-- Do not reset a shared/global Droste DB unless the user explicitly asked.
+- Confirm the selected project root before forcing a re-index. Use one writer per database.
 - Do not index secrets, dependency caches, build output, `.droste/`, or private
   generated graph JSON.
 - If `droste_status` or `droste context --json` reports multi-root warnings,
@@ -67,6 +67,10 @@ JSON MCP client configuration.
 
 ```bash
 droste status --json
+droste check --json
+droste find "symbolName" --json
+droste references "symbolName" --direction both --json
+droste watch .
 droste context "query" --budget 1500
 droste context "query" --budget 3000 --json
 droste zoom "symbolName" --no-open
@@ -80,6 +84,15 @@ When the Droste MCP server is connected, use:
 - `droste_index_project` to index the current repository.
 - `droste_get_context` to retrieve causal context for a query.
 - `droste_status` to inspect storage, active root, symbols and warnings.
+- `droste_check_index` to verify source hashes and partial coverage.
+- `droste_find_symbols` to locate IDs, qualified names and source lines.
+- `droste_references` to inspect static callers/callees with evidence.
+
+Re-index before using stale or unverifiable results. If coverage is partial,
+increase the relevant index limits or explicitly acknowledge the omitted files.
+For ambiguous references, choose a candidate ID or exact file instead of guessing.
+A missing reference does not establish that code is unused. Context budgets
+are characters (minimum 500); JSON metadata is outside that budget.
 
 Index first, then query. If the agent has an explicit project root, pass it.
 

@@ -1,0 +1,248 @@
+{
+  "scope": "Small manually labelled source-edge corpus; not exhaustive precision, semantic retrieval or agent-task performance.",
+  "backend": "hash",
+  "summary": {
+    "assertions": 20,
+    "passed": 19,
+    "positive_edges_found": 15,
+    "positive_edges": 16,
+    "false_edges_on_negative_assertions": 0,
+    "negative_assertions": 4,
+    "unexpected_failures": 0
+  },
+  "repositories": [
+    {
+      "repository": "psf/requests",
+      "commit": "b25c87d7cb8d6a18a37fa12442b5f883f9e41741",
+      "sources": [
+        {
+          "path": "src/requests/api.py",
+          "url": "https://raw.githubusercontent.com/psf/requests/b25c87d7cb8d6a18a37fa12442b5f883f9e41741/src/requests/api.py",
+          "sha256": "fd96fd39aeedcd5222cd32b016b3e30c463d7a3b66fce9d2444467003c46b10b"
+        },
+        {
+          "path": "src/requests/sessions.py",
+          "url": "https://raw.githubusercontent.com/psf/requests/b25c87d7cb8d6a18a37fa12442b5f883f9e41741/src/requests/sessions.py",
+          "sha256": "0a5d5da449ce7f0af3ccf6e4bbe7a67a935e37846dff4ff9f08cb6c7e2464e6f"
+        }
+      ],
+      "index_partial": false,
+      "assertions": [
+        {
+          "source_file": "src/requests/api.py",
+          "source": "get",
+          "target_file": "src/requests/api.py",
+          "target": "request",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "src/requests/api.py",
+          "source": "options",
+          "target_file": "src/requests/api.py",
+          "target": "request",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "src/requests/api.py",
+          "source": "head",
+          "target_file": "src/requests/api.py",
+          "target": "request",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "src/requests/api.py",
+          "source": "post",
+          "target_file": "src/requests/api.py",
+          "target": "request",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "src/requests/api.py",
+          "source": "put",
+          "target_file": "src/requests/api.py",
+          "target": "request",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "src/requests/api.py",
+          "source": "patch",
+          "target_file": "src/requests/api.py",
+          "target": "request",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "src/requests/api.py",
+          "source": "delete",
+          "target_file": "src/requests/api.py",
+          "target": "request",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "src/requests/api.py",
+          "source": "request",
+          "target_file": "src/requests/sessions.py",
+          "target": "Session",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "src/requests/api.py",
+          "source": "request",
+          "target_file": "src/requests/sessions.py",
+          "target": "Session.request",
+          "expected": true,
+          "observed": false,
+          "known_gap": true,
+          "passed": false
+        },
+        {
+          "source_file": "src/requests/api.py",
+          "source": "get",
+          "target_file": "src/requests/sessions.py",
+          "target": "Session.request",
+          "expected": false,
+          "observed": false,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "src/requests/api.py",
+          "source": "post",
+          "target_file": "src/requests/api.py",
+          "target": "get",
+          "expected": false,
+          "observed": false,
+          "known_gap": false,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "repository": "python/cpython",
+      "commit": "0cc81280367df838c4b199f8f0378837165071c2",
+      "sources": [
+        {
+          "path": "Lib/urllib/parse.py",
+          "url": "https://raw.githubusercontent.com/python/cpython/0cc81280367df838c4b199f8f0378837165071c2/Lib/urllib/parse.py",
+          "sha256": "e6af7f475262f1de335bb2e41e26adb94d6103977cf5fe1ddc430dc6a3b1623f"
+        }
+      ],
+      "index_partial": false,
+      "assertions": [
+        {
+          "source_file": "Lib/urllib/parse.py",
+          "source": "quote_plus",
+          "target_file": "Lib/urllib/parse.py",
+          "target": "quote",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "Lib/urllib/parse.py",
+          "source": "unquote_plus",
+          "target_file": "Lib/urllib/parse.py",
+          "target": "unquote",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "Lib/urllib/parse.py",
+          "source": "parse_qs",
+          "target_file": "Lib/urllib/parse.py",
+          "target": "parse_qsl",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "Lib/urllib/parse.py",
+          "source": "urlparse",
+          "target_file": "Lib/urllib/parse.py",
+          "target": "urlsplit",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "Lib/urllib/parse.py",
+          "source": "urlunparse",
+          "target_file": "Lib/urllib/parse.py",
+          "target": "urlunsplit",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "Lib/urllib/parse.py",
+          "source": "urljoin",
+          "target_file": "Lib/urllib/parse.py",
+          "target": "urlparse",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "Lib/urllib/parse.py",
+          "source": "urldefrag",
+          "target_file": "Lib/urllib/parse.py",
+          "target": "urlparse",
+          "expected": true,
+          "observed": true,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "Lib/urllib/parse.py",
+          "source": "quote_plus",
+          "target_file": "Lib/urllib/parse.py",
+          "target": "urlparse",
+          "expected": false,
+          "observed": false,
+          "known_gap": false,
+          "passed": true
+        },
+        {
+          "source_file": "Lib/urllib/parse.py",
+          "source": "urlparse",
+          "target_file": "Lib/urllib/parse.py",
+          "target": "parse_qs",
+          "expected": false,
+          "observed": false,
+          "known_gap": false,
+          "passed": true
+        }
+      ]
+    }
+  ]
+}

@@ -3,6 +3,10 @@
 This repo-local Codex plugin connects the current workspace to the
 Droste-Memory spatial-fractal engine.
 
+This custom adapter is a legacy interface. For the 1.2.0 source-health,
+symbol lookup and reference tools, use the supported `droste mcp` server from
+the [main README](../../README.md#use-it-as-an-mcp-server).
+
 ## Components
 
 ```text

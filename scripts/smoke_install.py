@@ -35,6 +35,13 @@ def main() -> None:
         assert status["shard_count"] > 0, status
         context = json.loads(run("context", "calculate", "--budget", "1000", "--json"))
         assert "calculate" in json.dumps(context)
+        assert json.loads(run("check", "--json"))["status"] == "fresh"
+        symbols = json.loads(run("find", "calculate", "--json"))
+        assert symbols["matches"][0]["path"] == "sample.py"
+        refs = json.loads(run("references", "double", "--json"))
+        assert refs["references"][0]["from"]["name"] == "calculate"
+        assert refs["references"][0]["evidence"][0]["line"] == 5
+        run("zoom", "calculate", "--no-open", "--no-visualizer")
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))
             port = sock.getsockname()[1]
@@ -68,12 +75,25 @@ def main() -> None:
                 async with ClientSession(reader, writer) as session:
                     await session.initialize()
                     tools = await session.list_tools()
-                    assert "droste_get_context" in {tool.name for tool in tools.tools}
-                    result = await session.call_tool("droste_status", {})
-                    assert not result.isError
-                    assert "node_count" in str(result)
+                    expected = {"droste_index_project", "droste_get_context", "droste_status", "droste_find_symbols",
+                                "droste_references", "droste_check_index", "inject_concept", "move_camera_and_zoom", "get_space_status"}
+                    assert expected <= {tool.name for tool in tools.tools}
+                    for name, arguments, needle in [
+                        ("droste_index_project", {"path": str(project)}, "indexed"),
+                        ("droste_get_context", {"query": "calculate"}, "calculate"),
+                        ("droste_status", {}, "node_count"),
+                        ("droste_check_index", {}, "fresh"),
+                        ("droste_find_symbols", {"query": "double"}, "double"),
+                        ("droste_references", {"target": "double"}, "calculate"),
+                        ("inject_concept", {"title": "Smoke concept", "summary": "A temporary concept", "detail_content": "test"}, "Smoke concept"),
+                        ("move_camera_and_zoom", {"x": 0, "y": 0, "zoom_level": 20}, "camera"),
+                        ("get_space_status", {}, "node_count"),
+                    ]:
+                        result = await session.call_tool(name, arguments)
+                        assert not result.isError, (name, result)
+                        assert needle in str(result), (name, result)
         asyncio.run(asyncio.wait_for(mcp_check(), timeout=45))
-    print("Installed wheel smoke passed: index, status, context, HTTP viewer, MCP handshake and tool call")
+    print("Installed wheel smoke passed: index, status, context, check, find, references, zoom, HTTP viewer and all nine MCP tools")
 
 
 if __name__ == "__main__":

@@ -2,23 +2,18 @@
 
 Honest scope
 ------------
-We cannot run Cursor / Sourcegraph Cody / Continue here (closed products,
-their own infra). What we CAN run — faithfully and reproducibly — are the two
-retrieval ALGORITHMS those products are built on, at equal retrieval breadth k:
+This script compares three local retrieval methods at equal retrieval breadth
+k. It does not reproduce any competing product or its retrieval pipeline:
 
-  * lexical    : pure term-overlap ranking. The ctags / ripgrep / Aider
-                 repo-map analogue. Can only return what *name-matches*.
+  * lexical    : simple term-overlap ranking (not production BM25 or ripgrep).
   * embedding  : pure cosine over real fastembed (BAAI/bge-small-en-v1.5, 384d)
-                 vectors, NO graph. The vanilla vector-RAG analogue — the core
-                 of Cody/Continue/Cursor "semantic" code search and of any
-                 Pinecone/Weaviate + embeddings stack.
+                 vectors, with no graph or additional reranking.
   * droste     : the product — lexical+semantic seed, then bidirectional
                  syntax_dependency wormhole traversal (get_context).
 
-So this is a *retrieval-method* benchmark, not a product benchmark: the
-competitor products layer UX + an LLM on top of one of the first two cores.
-The claim under test is narrow and falsifiable: graph-causal traversal recovers
-structural intent that neither a lexical nor a pure-vector core can reach.
+This measures retrieval within Droste's own extracted graph. It cannot validate
+that graph's correctness, agent task completion or superiority over a product.
+Use public_corpus.py for independently labelled, deliberately narrow edge checks.
 
 Ground truth is self-supervised (no hand labels): the AST syntax_dependency
 edges. For a probed symbol, gold = {self} U direct callers U direct callees.

@@ -88,6 +88,7 @@ class IndexPayload(BaseModel):
     reset: bool = False
     max_files: int = Field(default=600, ge=1, le=5000)
     max_symbols: int = Field(default=2400, ge=0, le=20000)
+    max_symbols_per_lang: int = Field(default=3000, ge=0, le=20000)
     max_file_bytes: int = Field(default=512_000, ge=1024, le=5_000_000)
 
 
@@ -174,6 +175,7 @@ def api_index(payload: IndexPayload) -> dict[str, Any]:
             reset=payload.reset,
             max_files=payload.max_files,
             max_symbols=payload.max_symbols,
+            max_symbols_per_lang=payload.max_symbols_per_lang,
             max_file_bytes=payload.max_file_bytes,
         )
     except (FileNotFoundError, NotADirectoryError, ValueError) as exc:

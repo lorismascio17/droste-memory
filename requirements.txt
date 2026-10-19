@@ -16,3 +16,4 @@ uvicorn[standard]>=0.27.0
 # degrades gracefully to the regex registry, preserving the zero-config boot.
 tree-sitter>=0.23.0
 tree-sitter-language-pack>=1.9.0
+pathspec>=0.12,<2
