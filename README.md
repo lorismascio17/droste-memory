@@ -18,12 +18,12 @@ Find definitions, inspect static references and verify source freshness.
 [![CI](https://github.com/lorismascio17/droste-memory/actions/workflows/ci.yml/badge.svg)](https://github.com/lorismascio17/droste-memory/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-[![Droste token zoom on real Requests source](docs/assets/explore-preview.png)](https://lorismascio17.github.io/droste-memory/explore.html)
+[![Droste code galaxy flythrough](docs/assets/hero.gif)](docs/assets/demo.mp4)
 
-*Explore the recorded token zoom demo, including exact payloads.
-[Original galaxy flythrough (FastAPI)](docs/assets/demo.mp4)*
+*Explore the FastAPI code galaxy in motion. [Watch the video](docs/assets/demo.mp4)
+or [open the interactive galaxy](https://lorismascio17.github.io/droste-memory/cockpit.html?web=1).*
 
-[Token zoom demo](https://lorismascio17.github.io/droste-memory/explore.html) · [Code galaxy](https://lorismascio17.github.io/droste-memory/cockpit.html?web=1) · [Quickstart](#quickstart) · [Exploration](docs/EXPLORATION.md) · [MCP](#use-it-as-an-mcp-server)
+[Code galaxy](https://lorismascio17.github.io/droste-memory/cockpit.html?web=1) · [Token zoom demo](https://lorismascio17.github.io/droste-memory/explore.html) · [Quickstart](#quickstart) · [Exploration](docs/EXPLORATION.md) · [MCP](#use-it-as-an-mcp-server)
 
 </div>
 
