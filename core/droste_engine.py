@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -17,9 +18,10 @@ from threading import RLock
 from typing import Any
 
 from .embedding_projector import EmbeddingProjector
+from .storage_paths import default_db_path
 
 
-DEFAULT_DB_PATH = Path(__file__).resolve().parents[1] / "droste_memory_db.json"
+DEFAULT_DB_PATH = default_db_path()
 LOCKED_DETAIL = "[Richiesto zoom ulteriore per svelare questo sottomondo]"
 VISUALIZER_NODE_LIMIT = 1600
 VISUALIZER_LINK_LIMIT = 320
@@ -219,7 +221,7 @@ class DrosteConceptEngine:
         db_path: str | Path = DEFAULT_DB_PATH,
         projector: EmbeddingProjector | None = None,
     ) -> None:
-        self.db_path = Path(db_path)
+        self.db_path = Path(db_path).expanduser().resolve()
         self.projector = projector or EmbeddingProjector()
         self._lock = RLock()
         self._data = self._load_or_initialize()
@@ -566,7 +568,7 @@ class DrosteConceptEngine:
 
         with self._lock:
             self._maybe_reload()
-            if self._data.get("storage") == "sharded":
+            if self._data.get("storage") == "sharded" and self._data.get("storage_layout") == "namespaced-v1":
                 shard_dir = self._shard_dir()
                 return {
                     "status": "already_sharded",
@@ -696,6 +698,9 @@ class DrosteConceptEngine:
         if meta.get("storage") == "sharded":
             nodes: list[dict[str, Any]] = list(meta.get("nodes", []))
             shard_dir = self._shard_dir()
+            if meta.get("storage_layout") != "namespaced-v1":
+                # Preserve legacy shards; the next save migrates this DB only.
+                shard_dir = self.db_path.parent.joinpath(*SHARD_SUBDIR)
             if shard_dir.exists():
                 for shard_file in shard_dir.glob("*.json"):
                     try:
@@ -718,7 +723,15 @@ class DrosteConceptEngine:
         self._save(self._data)
 
     def _shard_dir(self) -> Path:
-        return self.db_path.parent.joinpath(*SHARD_SUBDIR)
+        return self.storage_dir / "nodes"
+
+    @property
+    def storage_dir(self) -> Path:
+        name = self.db_path.name
+        if os.name == "nt":
+            name = name.casefold()
+        key = hashlib.sha256(name.encode("utf-8")).hexdigest()[:20]
+        return self.db_path.parent / ".droste" / key
 
     @staticmethod
     def _shard_filename(shard_key: str) -> str:
@@ -827,10 +840,13 @@ class DrosteConceptEngine:
         # implies is already durably on disk.
         meta = {key: value for key, value in data.items() if key != "nodes"}
         meta["storage"] = "sharded"
+        meta["storage_layout"] = "namespaced-v1"
         meta["nodes"] = loose
         self._atomic_write(
             self.db_path, json.dumps(meta, ensure_ascii=False, indent=2)
         )
+        data["storage"] = "sharded"
+        data["storage_layout"] = "namespaced-v1"
 
         # Our own write: advance the marker so _maybe_reload doesn't clobber the
         # in-RAM state we just persisted.

@@ -3,11 +3,12 @@ name: Publish MCP Registry
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 8 * * *"
+    - cron: "37 8 * * *"
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       id-token: write

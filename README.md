@@ -22,7 +22,7 @@ agent the *causal* slice of code it actually needs — not just keyword matches.
 *Zooming out reveals the causal web — every cyan arc is a real `syntax_dependency`
 edge. [Full flythrough (FastAPI)](docs/assets/demo.mp4)*
 
-[Quickstart](#quickstart) · [Why it's different](#why-its-different) · [How it works](#how-it-works) · [MCP](#use-it-as-an-mcp-server) · [Benchmarks](#benchmarks)
+[Live demo](https://lorismascio17.github.io/droste-memory/) ? [Quickstart](#quickstart) · [Why it's different](#why-its-different) · [How it works](#how-it-works) · [MCP](#use-it-as-an-mcp-server) · [Benchmarks](#benchmarks)
 
 </div>
 
@@ -41,7 +41,7 @@ droste index . # index the current repo
 droste view    # open the fractal galaxy in your browser
 ```
 
-Install once, then index and view. `droste view` opens a full-screen, 60fps zoomable map of your
+Install once, then index and view. `droste view` opens a full-screen, zoomable map of your
 code — scroll to dive from the project star into folder orbits, down to the
 individual functions, with the causal edges glowing between them.
 
@@ -91,18 +91,21 @@ Fast path: droste context hub_core --budget 1000 | clip
 
 ## Why it's different
 
-Most "code context" tools rank by keyword (ctags / ripgrep / repo-maps) or by
-embedding cosine (vector-RAG). Both can only return what *resembles* your query.
-A caller that shares no tokens — or a database function in a different language —
-is invisible to them, yet it's exactly what you need to understand or change the
-code.
+Droste combines lexical and semantic retrieval with a static code graph and an
+interactive map. A graph can bring callers and callees into context even when
+they share few words with the query. Other tools also offer graph-based MCP
+retrieval; see the [dated ecosystem review](docs/COMPETITORS.md).
+
+Droste focuses on a small Python CLI, budgeted context, and visual exploration.
+The graph is a static approximation: name matching and cross-language bridges
+can produce false positives and do not prove runtime behavior.
 
 Droste's edge is the causal graph:
 
 - **Causal wormholes.** Real `syntax_dependency` edges (calls, imports,
   inheritance) in both directions — Droste hands the caller and callees, ordered,
   within a token budget.
-- **Cross-language bridges.** The part nobody else does well: Droste links across
+- **Cross-language bridges.** Droste links across
   languages — app code to SQL functions/tables (`.rpc('x')`, `.from('table')`),
   to edge functions, and same-name handlers between any two languages. Your
   Dart/TS/Python frontend and your database stop being two separate worlds on the
@@ -125,18 +128,18 @@ Java, C#, C/C++, Kotlin, Swift, Ruby, PHP, SQL — symbols *and* edges.
 
 ## Benchmarks
 
-Self-supervised eval (gold = the true caller/callee set from the AST), equal
-retrieval breadth *k*, real embeddings, across Python + Dart repos
-(`eval/comparative_eval.py`):
+The evaluation script compares structural retrieval against lexical and vector
+baselines, using caller/callee relations extracted from the same code as the
+reference. This measures graph-neighbor retrieval, not agent task completion or
+superiority over another product. Previous headline numbers are omitted until
+we publish a fixed public corpus, pinned revisions and complete result files.
 
-| structural retrieval | Droste | vector-RAG core | lexical core |
-| --- | --- | --- | --- |
-| neighbour-recall | **0.94** | 0.18 | 0.42 |
-| nDCG@k | **0.65** | 0.10 | 0.29 |
+```bash
+python eval/comparative_eval.py --repos /path/to/public/repo --sample 60 --seed 7 --json results.json
+```
 
-…plus hundreds of true causal neighbours that both baselines structurally miss.
-This is a retrieval-method comparison (the cores of vector-RAG and lexical
-search), not a head-to-head against the finished products that wrap them.
+Use the real embedding backend for semantic comparisons; the offline hash mode
+is deterministic but does not provide semantic similarity.
 
 ---
 
@@ -151,9 +154,10 @@ search), not a head-to-head against the finished products that wrap them.
   expands the seed bidirectionally (callees and callers).
 - **Token packer.** Results fit a budget with LOD-demotion (full to contract to
   skeleton) and a hard guardrail that never cuts a line of code mid-token.
-- **Sharded persistence.** One shard per file under `.droste/`, blake2b
-  dirty-tracking so a re-index rewrites only what changed; atomic writes + meta
-  written last, so it is crash-safe and self-heals on the next run.
+- **Sharded persistence.** One shard per file under a database-specific `.droste/` directory, blake2b
+  dirty-tracking so a re-index rewrites only what changed; atomic file replacement with metadata
+  written last. Multi-file updates are not transactions; use one writer per DB
+  and re-index after an interrupted write.
 
 ---
 
@@ -181,6 +185,18 @@ command = "droste"
 args = ["mcp"]
 startup_timeout_sec = 120
 ```
+
+Installed packages store their default database in `%LOCALAPPDATA%/Droste` on
+Windows, `~/Library/Application Support/Droste` on macOS, or
+`${XDG_DATA_HOME:-~/.local/share}/droste` on Linux. Source checkouts preserve
+their repository-local database. Set `DROSTE_DB` or pass `--db` to override.
+Existing databases inside an older installation are not moved automatically;
+point `--db` at the old file to continue using it, or re-index your source.
+
+For explicitly offline operation, set `DROSTE_EMBEDDING_BACKEND=hash`.
+The default `auto` backend may download an embedding model on first use;
+code is processed locally. Hash mode trades semantic retrieval for deterministic,
+network-free embedding. `droste view` serves a snapshot; rerun it after indexing.
 
 By default, `droste mcp` uses Droste's global local database. That is fine for
 quick use and small workflows. For serious multi-repo work, use one database per
@@ -299,9 +315,19 @@ cross-process shard race). `eval/` = performance/quality benchmarks.
 
 ## Status
 
-**v1.1.6 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
+**v1.1.7 (alpha).** Engine, polyglot + cross-language graph, CLI, fractal
 visualizer and MCP server are working and tested. Packaging/distribution are
 maturing — issues and PRs welcome (see `CONTRIBUTING.md`).
+
+### What's new in v1.1.7
+
+- Restored fresh-install MCP startup by requiring the compatible 1.x SDK.
+- Fixed `droste --db ... view` to visualize the requested database.
+- Viewer snapshots use temporary storage, including with read-only installations.
+- Isolated shards, registries and embedding caches for databases sharing a folder.
+- Installed packages use writable user data storage; `DROSTE_DB` overrides it.
+- Added Windows CI, wheel-content checks and an installed CLI/viewer/MCP smoke test.
+- Restored the demo homepage and refreshed the competitive positioning.
 
 ### What's new in v1.1.6
 

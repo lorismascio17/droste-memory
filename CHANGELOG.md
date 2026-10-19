@@ -1,5 +1,17 @@
 # Changelog
 
+
+## 1.1.7 ? 2026-10-19
+
+- Fix MCP startup on fresh installations: require `mcp>=1.30.0,<2`; MCP 2.x removed `mcp.server.fastmcp`.
+- Respect the selected database when exporting the viewer; serve each snapshot from temporary storage.
+- Use writable user data paths for installed packages and support `DROSTE_DB`.
+- Namespace shards and caches per database; migrate legacy shards on save without deleting originals. Rebuild regenerable caches.
+- Add explicit offline hash embeddings via `DROSTE_EMBEDDING_BACKEND=hash`.
+- Add Windows CI, distribution-content validation and an installed wheel smoke test covering CLI, HTTP and MCP.
+- Fix the GitHub Pages homepage and document current competitors and limitations.
+
+
 All notable public release notes for Droste are tracked here.
 
 ## v1.1.6 - Visualizer Wheel Packaging

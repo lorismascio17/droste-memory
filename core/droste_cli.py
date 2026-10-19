@@ -33,15 +33,12 @@ _configure_windows_utf8_output()
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-LOCAL_PACKAGES = ROOT / ".python-packages"
-if LOCAL_PACKAGES.exists():
-    sys.path.insert(0, str(LOCAL_PACKAGES))
 
 from core.droste_engine import DEFAULT_DB_PATH, DrosteConceptEngine
 from core.droste_ingester import DrosteProjectIngester, droste_zoom_query
 
 
-VERSION = "v1.1.6-Alpha-Sharded"
+VERSION = "v1.1.7-Alpha-Sharded"
 VISUALIZER_CAMERA_URL = "http://127.0.0.1:5000/api/camera"
 
 RESET = "\033[0m"
@@ -146,8 +143,7 @@ def _storage_label(db_path: Path) -> str:
     return "Inline empty"
 
 
-def _shard_stats(db_path: Path) -> dict[str, Any]:
-    shard_dir = db_path.parent / ".droste" / "nodes"
+def _shard_stats(shard_dir: Path) -> dict[str, Any]:
     if not shard_dir.exists():
         return {"path": str(shard_dir), "count": 0, "bytes": 0}
     files = [path for path in shard_dir.glob("*.json") if path.is_file()]
@@ -169,7 +165,7 @@ def command_status(args: argparse.Namespace) -> int:
     links = engine.all_links()
     symbol_count = sum(1 for node in nodes if node.node_type == "symbol")
     syntax_link_count = sum(1 for link in links if link.type == "syntax_dependency")
-    shard_stats = _shard_stats(engine.db_path)
+    shard_stats = _shard_stats(engine._shard_dir())
 
     payload = {
         "storage": _storage_label(engine.db_path),
@@ -314,85 +310,58 @@ def command_index(args: argparse.Namespace) -> int:
 
 
 def command_view(args: argparse.Namespace) -> int:
-    """Export the live graph for the chosen root and open the fractal cockpit —
-    the one-command 'wow': index, then `droste view`."""
+    """Serve a snapshot of the selected database without modifying the package."""
     import http.server
-    import importlib.util
-    import socketserver
-    import threading
+    import tempfile
     import webbrowser
-
-    import os
-
-    vis_dir = ROOT / "visualizer"
-    spec = importlib.util.spec_from_file_location(
-        "droste_export_graph", str(vis_dir / "export_graph.py"))
-    exporter = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(exporter)
+    from functools import partial
+    from visualizer import export_graph
 
     engine = _engine(args.db)
     nodes = engine.all_nodes()
-    links = engine.all_links()
-
-    # Pick which indexed project to view. Default = the current working
-    # directory, so `droste index .` then `droste view` shows THIS project
-    # (not the alphabetically-last of every project ever indexed).
     roots = sorted({n.index_root for n in nodes if n.index_root})
     if not roots:
-        print("no indexed roots — run `droste index <path>` first", file=sys.stderr)
+        print("no indexed roots ? run `droste index <path>` first", file=sys.stderr)
+        return 2
+    requested = args.root
+    if requested is None:
+        cwd = engine.normalize_root(Path.cwd())
+        requested = next((r for r in roots if engine.normalize_root(r) == cwd), None)
+        requested = requested or engine.active_root()
+    try:
+        chosen = export_graph._pick_root(engine, requested)
+    except SystemExit as exc:
+        print(str(exc), file=sys.stderr)
         return 2
 
-    def _res(p):
-        return str(Path(p).expanduser().resolve()).replace("\\", "/").rstrip("/").lower()
-
-    if args.root:
-        want = _res(args.root)
-        chosen = next((r for r in roots if _res(r) == want), None)
-        if chosen is None:
-            print("root not indexed: " + args.root + "\nindexed roots:\n  "
-                  + "\n  ".join(roots), file=sys.stderr)
-            return 2
-    else:
-        cwd = _res(os.getcwd())
-        chosen = next((r for r in roots if _res(r) == cwd), None)
-        if chosen is None:
-            latest: dict[str, str] = {}
-            for n in nodes:
-                if n.index_root:
-                    ts = n.updated_at or n.created_at or ""
-                    if ts > latest.get(n.index_root, ""):
-                        latest[n.index_root] = ts
-            chosen = max(latest, key=latest.get) if latest else roots[-1]
-            print(f"  (current dir not indexed; showing most recent: {chosen})")
-
-    counts = exporter.export(chosen, vis_dir / "graph.json")
-    (vis_dir / "status.json").write_text(json.dumps({
-        "node_count": counts["project"] + counts["directory"] + counts["file"] + counts["symbol"],
-        "symbol_count": counts["symbol"],
-        "link_count": counts["edge"],
-        "syntax_link_count": counts["edge"],
-        "counts": counts,
-    }, ensure_ascii=False), encoding="utf-8")
-
-    def handler(*a, **k):
-        return http.server.SimpleHTTPRequestHandler(*a, directory=str(vis_dir), **k)
-
-    socketserver.TCPServer.allow_reuse_address = True
-    httpd = socketserver.TCPServer(("127.0.0.1", args.port), handler)
-    url = f"http://127.0.0.1:{args.port}/cockpit.html?web=1"
-    print_compact_header()
-    print(f"view  ->  {url}")
-    print(f"  project: {counts['symbol']} symbols / {counts['edge']} causal edges "
-          f"across {counts['file']} files")
-    print("  Ctrl+C to stop")
-    if not args.no_open:
-        threading.Timer(0.6, lambda: webbrowser.open(url)).start()
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\nstopped")
-    finally:
-        httpd.server_close()
+    assets = Path(export_graph.__file__).resolve().parent
+    # Only public assets and this project's snapshot are served. Temporary
+    # storage works with read-only installations and isolates concurrent views.
+    with tempfile.TemporaryDirectory(prefix="droste-view-") as directory:
+        view_dir = Path(directory)
+        shutil.copyfile(assets / "cockpit.html", view_dir / "cockpit.html")
+        counts = export_graph.export(chosen, view_dir / "graph.json", engine=engine)
+        (view_dir / "status.json").write_text(json.dumps({
+            "node_count": sum(counts[k] for k in ("project", "directory", "file", "symbol")),
+            "symbol_count": counts["symbol"],
+            "link_count": counts["edge"],
+            "syntax_link_count": counts["edge"],
+            "counts": counts,
+        }), encoding="utf-8")
+        handler = partial(http.server.SimpleHTTPRequestHandler, directory=directory)
+        with http.server.ThreadingHTTPServer(("127.0.0.1", args.port), handler) as httpd:
+            url = f"http://127.0.0.1:{httpd.server_port}/cockpit.html?web=1"
+            print_compact_header()
+            print(f"view  ->  {url}")
+            print(f"  project: {counts['symbol']} symbols / {counts['edge']} causal edges "
+                  f"across {counts['file']} files")
+            print("  Snapshot of the index; rerun after re-indexing. Ctrl+C to stop", flush=True)
+            if not args.no_open:
+                webbrowser.open(url)
+            try:
+                httpd.serve_forever()
+            except KeyboardInterrupt:
+                print("\nstopped")
     return 0
 
 
@@ -408,7 +377,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="droste",
         description="Droste-Memory cyberpunk graph CLI.",
     )
-    parser.add_argument("--db", type=Path, default=DEFAULT_DB_PATH, help=argparse.SUPPRESS)
+    parser.add_argument("--db", type=Path, default=DEFAULT_DB_PATH, help="Database path (default: DROSTE_DB or user data directory).")
     parser.add_argument("--version", action="version", version=f"droste {VERSION}")
     sub = parser.add_subparsers(dest="command")
 

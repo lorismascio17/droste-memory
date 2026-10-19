@@ -1,4 +1,4 @@
-mcp>=1.2.0
+mcp>=1.30.0,<2
 numpy>=1.24.0
 scikit-learn>=1.3.0
 # Preferred real-semantics backend: ONNX, no torch -> protects the zero-config
@@ -6,7 +6,7 @@ scikit-learn>=1.3.0
 # lets the one-time model fetch trust the OS/corporate cert store.
 fastembed>=0.8.0
 truststore>=0.10.0
-sentence-transformers>=2.7.0  # heavier fallback if fastembed is unavailable
+# Optional heavier fallback: pip install 'droste-memory[heavy-embed]'
 pydantic>=2.0.0
 fastapi>=0.110.0
 uvicorn[standard]>=0.27.0

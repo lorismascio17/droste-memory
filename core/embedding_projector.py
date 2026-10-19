@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import re
 from dataclasses import dataclass
 from typing import Sequence
@@ -178,7 +179,14 @@ class EmbeddingProjector:
     def _load_model(self) -> None:
         if self._model_checked:
             return
+        backend = os.environ.get("DROSTE_EMBEDDING_BACKEND", "auto").lower()
+        if backend not in {"auto", "hash"}:
+            raise ValueError("DROSTE_EMBEDDING_BACKEND must be 'auto' or 'hash'")
         self._model_checked = True
+        if backend == "hash":
+            self._backend = "hash"
+            self._model_error = "Semantic model disabled by DROSTE_EMBEDDING_BACKEND=hash"
+            return
 
         # Make Python trust the OS cert store (Windows/corporate root CAs) so the
         # one-time model fetch over httpx doesn't die on CERTIFICATE_VERIFY_FAILED.

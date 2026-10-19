@@ -3,15 +3,29 @@ name: Growth Radar
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 8 * * 1"
+    - cron: "17 8 * * 1"
+
+permissions:
+  contents: read
 
 jobs:
   radar:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Check public discovery state
-        run: python scripts/growth_radar.py
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/growth_radar.py --output growth-report.json
+
+      - name: Preserve dated observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: growth-report-${{ github.run_id }}
+          path: growth-report.json
+          retention-days: 90

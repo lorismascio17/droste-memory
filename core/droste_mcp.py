@@ -15,8 +15,7 @@ from core.droste_ingester import (
 )
 
 
-def _shard_stats(db_path: Path) -> dict[str, Any]:
-    shard_dir = db_path.parent / ".droste" / "nodes"
+def _shard_stats(shard_dir: Path) -> dict[str, Any]:
     files = [path for path in shard_dir.glob("*.json") if path.is_file()] if shard_dir.exists() else []
     return {
         "path": str(shard_dir),
@@ -48,7 +47,7 @@ def droste_status_payload(
         link for link in engine.all_links()
         if link.from_node in node_ids and link.to_node in node_ids
     ]
-    shard_stats = _shard_stats(engine.db_path)
+    shard_stats = _shard_stats(engine._shard_dir())
     return {
         "storage": "Sharded" if migration.get("storage") == "sharded" else migration.get("storage"),
         "database": str(engine.db_path),

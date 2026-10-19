@@ -1046,8 +1046,7 @@ class DrosteProjectIngester:
     # v0.6.3+file-skip: persistent per-file registry (path -> sha1 + node ids)
     # ------------------------------------------------------------------
     def _file_registry_path(self) -> Path:
-        db_path = Path(getattr(self.engine, "db_path", "droste_memory_db.json"))
-        return db_path.with_name("droste_file_registry.json")
+        return self.engine.storage_dir / "file_registry.json"
 
     def _load_file_registry(self) -> dict[str, Any]:
         """All-roots registry: {index_root: {rel_path: {sha1, file_node_id,
@@ -1079,8 +1078,7 @@ class DrosteProjectIngester:
         """Cache file beside the engine DB. Path-independent and project-
         independent: keyed only by the embedding text, so identical snippets
         across projects (and re-indexes) reuse the same vector."""
-        db_path = Path(getattr(self.engine, "db_path", "droste_memory_db.json"))
-        return db_path.with_name("droste_embed_cache.json")
+        return self.engine.storage_dir / "embed_cache.json"
 
     def _load_embed_cache(self) -> dict[str, list[float]]:
         path = self._embed_cache_path()

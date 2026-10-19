@@ -35,8 +35,8 @@ def read_server_version() -> str:
         if package.get("identifier") == "droste-memory"
     }
     versions = {server_version, *package_versions}
-    if len(versions) != 1 or not server_version:
-        raise RuntimeError(f"server.json version mismatch: {sorted(versions)}")
+    if not package_versions or len(versions) != 1 or not server_version:
+        raise RuntimeError(f"server.json missing package or version mismatch: {versions!r}")
     return str(server_version)
 
 

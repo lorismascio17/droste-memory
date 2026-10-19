@@ -67,7 +67,7 @@ def _risk_score(*parts: str | None) -> int:
 
 
 def _resolve_root(p: str) -> str:
-    return _norm(str(Path(p).expanduser().resolve())).rstrip("/").lower()
+    return DrosteConceptEngine.normalize_root(p)
 
 
 def _pick_root(engine: DrosteConceptEngine, requested: str | None) -> str:
@@ -92,8 +92,8 @@ def _pick_root(engine: DrosteConceptEngine, requested: str | None) -> str:
     return max(latest, key=latest.get) if latest else sorted(roots)[-1]
 
 
-def export(requested_root: str | None, out_path: Path) -> dict:
-    engine = DrosteConceptEngine()
+def export(requested_root: str | None, out_path: Path, *, engine: DrosteConceptEngine | None = None) -> dict:
+    engine = engine if engine is not None else DrosteConceptEngine()
     root = _pick_root(engine, requested_root)
     root_norm = _norm(root).rstrip("/")
 
